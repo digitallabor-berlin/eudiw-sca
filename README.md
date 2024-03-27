@@ -8,6 +8,6 @@ This paper describes a generic approach on how a verifier might request a wallet
 
 ## SCA
 
-This paper describes how the mechanics of the [Request to sign](openid4vp-r2s.md) might be used to perform SCA within a baning context.
+This paper describes how the mechanics of the [Request to sign](openid4vp-r2s.md) might be used to perform SCA within a banking context.
 
 - [SCA based on OpenID4VP using OpenBanking](openbanking-r2s.md)
