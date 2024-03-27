@@ -8,8 +8,7 @@ This specification utilize the mechanisms of OpenID for Verfifiable Presentation
 
 The key words "**MUST**", "**MUST NOT**", "**REQUIRED**", "**SHALL**", "**SHALL NOT**",
 "**SHOULD**", "**SHOULD NOT**", "**RECOMMENDED**", "**NOT RECOMMENDED**", "**MAY**", and
-"**OPTIONAL**" in this document are to be interpreted as described in BCP 14 [@!RFC2119] [@!RFC8174]
-when, and only when, they appear in all capitals, as shown here.
+"**OPTIONAL**" in this document are to be interpreted as described in BCP 14 RFC2119[^rfc2119] and RFC8174 [^rfc8174] when, and only when, they appear in all capitals, as shown here.
 
 # Flow
 
@@ -17,23 +16,22 @@ when, and only when, they appear in all capitals, as shown here.
 
 ```mermaid
 
-title R2S
+sequenceDiagram
+  participant u as user
+  participant w as wallet
+  participant v as verifier
 
-participant user as u
-participant wallet as w
-participant verifier as v
-
-v->w: auth request inc.\n request2sign
-w->u: present request2sign
-u->w: consent
-w->w: sign
-w->v: auth resp
+  v->>w: auth request inc.\n request2sign
+  w->>u: present request2sign
+  u->>w: consent
+  w->>w: sign
+  w->>v: auth resp
 
 ```
 
 # Authorization request
 
-The authorization request as defined in [@!OPENID4VP, section 5] MUST be transported as OAuth 2.0 rich authorization request to include a container holding the data for the signing request in the request parameter `authorization_details` as defined in [@!RFC9396, section 2]. The `authorization_details` array hereby MUST include a JSON object with the `type` field set to the value of `request2sign`. In addition, this specification defines the following fields for the `request2sign` object:
+The authorization request as defined in OpenID4VP[^openid4vp], section 5 MUST be transported as OAuth 2.0 rich authorization request to include a container holding the data for the signing request in the request parameter `authorization_details` as defined in RFC 9396, section 2[^rfc9396]. The `authorization_details` array hereby MUST include a JSON object with the `type` field set to the value of `request2sign`. In addition, this specification defines the following fields for the `request2sign` object:
 
 `payload`: REQUIRED. JSON object holding the actual data that must be signed by the wallet.
 
@@ -121,3 +119,7 @@ Example of a presentation definition requesting a self-attested credential issue
 ```
 
 
+[^rfc9396]: [RFC 9396](https://www.rfc-editor.org/rfc/rfc9396.html)
+[^openid4vp]: [OpenID4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
+[^rfc2119]: [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119)
+[^rfc8174]: [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174)
