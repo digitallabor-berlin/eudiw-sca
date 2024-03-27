@@ -13,9 +13,23 @@ when, and only when, they appear in all capitals, as shown here.
 
 # Flow
 
-!---
-![Flow](r2s.svg "Flow")
-!---
+
+
+```mermaid
+
+title R2S
+
+participant user as u
+participant wallet as w
+participant verifier as v
+
+v->w: auth request inc.\n request2sign
+w->u: present request2sign
+u->w: consent
+w->w: sign
+w->v: auth resp
+
+```
 
 # Authorization request
 
