@@ -62,34 +62,23 @@ The `request2sign`object defines the following fields:
 Example of the `authorization_details`:
 
 ```json
-[{
-  "type": "request2sign",
-  "payload": {
-      "type": "request2sign",
-      "payload": {
-        "instructedAmount": {
-          "amount": "5.59",
-          "currency": "EUR"
-        },
-        "paymentIdentification": {
-          "endToEndIdentification": "CDF834F4-5CF4-4A27-9C04-9EEB347BF"
-        },
-        "remittanceInformationUnstructured": [
-          "Shopping at Merchant A"
-        ],
-        "creditor": {
-          "additionalPartyInformation": {
-            "merchantCallbackUrl": "https://merchant.com/callback"
-          },
-          "name": "Merchant A"
-        },
-        "creditorAccount": {
-          "iban": "DE88940594210020801890"
-        }
+[
+  {
+    "type": "request2sign",
+    "payload": {
+      "instructedAmount": {
+        "amount": "5.59",
+        "currency": "EUR"
+      },
+      "transactionID": "CDF834F4-5CF4-4A27-9C04-9EEB347BF",
+      "purpose": "Shopping somewhere",
+      "creditorAccount": {
+        "iban": "DE88940594210020801890",
+        "name": "Merchant A"
       }
     }
-}]
-
+  }
+]
 ```
 
 ### Presentation definition
@@ -99,7 +88,7 @@ The `presentation_definition` used in the authorization request is a critical co
 1. It MUST include an `input_descriptor` by the `id` of `request2sign_input`. This keyword indicates to the wallet that a self-attested credential is requested which must include the signing input data send along by the verifier within the authorization request. 
 2. The `request2sign_input` input descriptor MUST request a self-attested credential using the `subject_is_issuer` property of the relational constraint feature described in Presentation Exchange 2.0, section 7.3[^dif_pe]. 
 3. The `request2sign_input` input descriptor MUST request a `field` with the id `request2sign_payload`. This field will hold the signing input data.
-4. The `filter` property of the `request2sign_payload` MUST include a JSON schema of the singing input data structure. The wallet MUST use this schema to dynamically render a UI form to present the data to the holder while asking for consent. For an improved user experience, it is RECOMMENDED to make use of JSON schema annotations[^js_an] like `title`, `description` and `example`. 
+4. The `filter` property of the `request2sign_payload` MUST include a JSON schema of the singing input data structure. The wallet MUST use this schema to dynamically render a UI form to present the data to the holder while asking for consent. For an improved user experience, it is RECOMMENDED to make use of JSON schema annotations[^js_an][^js_an_example] like `title`, `description` and `example`.
 
 Example of a presentation definition requesting a self-attested credential issued by `did:example:sd5sde`:
 
@@ -124,51 +113,60 @@ Example of a presentation definition requesting a self-attested credential issue
                 "properties": {
                   "instructedAmount": {
                     "type": "object",
+                    "title": "Amount",
                     "properties": {
-                      "currency": {
-                        "type": "string",
-                        "title": "Currency",
-                        "description": "Currency the amount is payed in."
-                      },
                       "amount": {
                         "type": "string",
                         "title": "Amount",
-                        "description": "Amount of money to pay.",
-                        "example": "1.99"
+                        "description": "Amount to pay"
+                      },
+                      "currency": {
+                        "type": "string",
+                        "title": "Currency",
+                        "description": "Currency to pay in"
                       }
                     },
                     "required": [
-                      "currency",
-                      "amount"
+                      "amount",
+                      "currency"
                     ]
                   },
-                  "creditorName": {
+                  "transactionID": {
                     "type": "string",
-                    "title": "Creditor",
-                    "description": "Creditor receiving the money"
+                    "title": "Transaction ID",
+                    "description": "Unique transaction identifier"
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "title": "Purpose",
+                    "description": "Purpose of the transaction"
                   },
                   "creditorAccount": {
                     "type": "object",
+                    "title": "Creditor",
                     "properties": {
                       "iban": {
                         "type": "string",
-                        "title": "IBAN"
+                        "title": "IBAN",
+                        "description": "IBAN of the creditor"
+                      },
+                      "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "description": "Name of the creditor"
                       }
                     },
                     "required": [
-                      "iban"
+                      "iban",
+                      "name"
                     ]
-                  },
-                  "remittanceInformationUnstructured": {
-                    "type": "string",
-                    "title": "Purpose"
                   }
                 },
                 "required": [
                   "instructedAmount",
-                  "creditorName",
-                  "creditorAccount",
-                  "remittanceInformationUnstructured"
+                  "transactionID",
+                  "purpose",
+                  "creditorAccount"
                 ]
               }
             },
@@ -200,6 +198,18 @@ Example of a presentation definition requesting a self-attested credential issue
 }
 ```
 
+```mermaid
+
+block-beta
+columns 2
+  block
+    I("Currency") Y("dd")
+    A("Amount") B("am")
+  end
+  classDef exist fill:#696,stroke:#333;
+  class A exist
+```
+
 ### Processing
 
 The processing of an OpenID4VP authorization request by the wallet must be extended by the following steps.
@@ -218,3 +228,4 @@ The processing of an OpenID4VP authorization request by the wallet must be exten
 [^sca]: [Strong-Customer-Authentication](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32018R0389)
 [^dif_pe]: [Presentation Exchange 2.0](https://identity.foundation/presentation-exchange/spec/v2.0.0/#validation-of-claims)
 [^js_an]: [JSON Schema Annotations](https://json-schema.org/understanding-json-schema/reference/annotations)
+[^js_an_example]: [Example dynamic form generation based on JSON Schema](https://rjsf-team.github.io/react-jsonschema-form/#eyJmb3JtRGF0YSI6eyJpbnN0cnVjdGVkQW1vdW50Ijp7ImFtb3VudCI6IjUuNTkiLCJjdXJyZW5jeSI6IkVVUiJ9LCJ0cmFuc2FjdGlvbklEIjoiQ0RGODM0RjQtNUNGNC00QTI3LTlDMDQtOUVFQjM0N0JGIiwicHVycG9zZSI6IlNob3BwaW5nIHNvbWV3aGVyZSIsImNyZWRpdG9yQWNjb3VudCI6eyJpYmFuIjoiREU4ODk0MDU5NDIxMDAyMDgwMTg5MCIsIm5hbWUiOiJNZXJjaGFudCBBIn19LCJzY2hlbWEiOnsiJHNjaGVtYSI6Imh0dHA6Ly9qc29uLXNjaGVtYS5vcmcvZHJhZnQtMDQvc2NoZW1hIyIsInR5cGUiOiJvYmplY3QiLCJwcm9wZXJ0aWVzIjp7Imluc3RydWN0ZWRBbW91bnQiOnsidHlwZSI6Im9iamVjdCIsInRpdGxlIjoiQW1vdW50IiwicHJvcGVydGllcyI6eyJhbW91bnQiOnsidHlwZSI6InN0cmluZyIsInRpdGxlIjoiQW1vdW50IiwiZGVzY3JpcHRpb24iOiJBbW91bnQgdG8gcGF5In0sImN1cnJlbmN5Ijp7InR5cGUiOiJzdHJpbmciLCJ0aXRsZSI6IkN1cnJlbmN5IiwiZGVzY3JpcHRpb24iOiJDdXJyZW5jeSB0byBwYXkgaW4ifX0sInJlcXVpcmVkIjpbImFtb3VudCIsImN1cnJlbmN5Il19LCJ0cmFuc2FjdGlvbklEIjp7InR5cGUiOiJzdHJpbmciLCJ0aXRsZSI6IlRyYW5zYWN0aW9uIElEIiwiZGVzY3JpcHRpb24iOiJVbmlxdWUgdHJhbnNhY3Rpb24gaWRlbnRpZmllciJ9LCJwdXJwb3NlIjp7InR5cGUiOiJzdHJpbmciLCJ0aXRsZSI6IlB1cnBvc2UiLCJkZXNjcmlwdGlvbiI6IlB1cnBvc2Ugb2YgdGhlIHRyYW5zYWN0aW9uIn0sImNyZWRpdG9yQWNjb3VudCI6eyJ0eXBlIjoib2JqZWN0IiwidGl0bGUiOiJDcmVkaXRvciIsInByb3BlcnRpZXMiOnsiaWJhbiI6eyJ0eXBlIjoic3RyaW5nIiwidGl0bGUiOiJJQkFOIiwiZGVzY3JpcHRpb24iOiJJQkFOIG9mIHRoZSBjcmVkaXRvciJ9LCJuYW1lIjp7InR5cGUiOiJzdHJpbmciLCJ0aXRsZSI6Ik5hbWUiLCJkZXNjcmlwdGlvbiI6Ik5hbWUgb2YgdGhlIGNyZWRpdG9yIn19LCJyZXF1aXJlZCI6WyJpYmFuIiwibmFtZSJdfX0sInJlcXVpcmVkIjpbImluc3RydWN0ZWRBbW91bnQiLCJ0cmFuc2FjdGlvbklEIiwicHVycG9zZSIsImNyZWRpdG9yQWNjb3VudCJdfSwidWlTY2hlbWEiOnsiZmlyc3ROYW1lIjp7InVpOmF1dG9mb2N1cyI6dHJ1ZSwidWk6ZW1wdHlWYWx1ZSI6IiIsInVpOnBsYWNlaG9sZGVyIjoidWk6ZW1wdHlWYWx1ZSBjYXVzZXMgdGhpcyBmaWVsZCB0byBhbHdheXMgYmUgdmFsaWQgZGVzcGl0ZSBiZWluZyByZXF1aXJlZCIsInVpOmF1dG9jb21wbGV0ZSI6ImZhbWlseS1uYW1lIiwidWk6ZW5hYmxlTWFya2Rvd25JbkRlc2NyaXB0aW9uIjp0cnVlLCJ1aTpkZXNjcmlwdGlvbiI6Ik1ha2UgdGV4dCAqKmJvbGQqKiBvciAqaXRhbGljKi4gVGFrZSBhIGxvb2sgYXQgb3RoZXIgb3B0aW9ucyBbaGVyZV0oaHR0cHM6Ly9tYXJrZG93bi10by1qc3gucXVhbnRpem9yLmRldi8pLiJ9LCJsYXN0TmFtZSI6eyJ1aTphdXRvY29tcGxldGUiOiJnaXZlbi1uYW1lIiwidWk6ZW5hYmxlTWFya2Rvd25JbkRlc2NyaXB0aW9uIjp0cnVlLCJ1aTpkZXNjcmlwdGlvbiI6Ik1ha2UgdGhpbmdzICoqYm9sZCoqIG9yICppdGFsaWMqLiBFbWJlZCBzbmlwcGV0cyBvZiBgY29kZWAuIDxzbWFsbD5BbmQgdGhpcyBpcyBhIHNtYWxsIHRleHRzLjwvc21hbGw+ICJ9LCJhZ2UiOnsidWk6d2lkZ2V0IjoidXBkb3duIiwidWk6dGl0bGUiOiJBZ2Ugb2YgcGVyc29uIiwidWk6ZGVzY3JpcHRpb24iOiIoZWFydGggeWVhcikifSwiYmlvIjp7InVpOndpZGdldCI6InRleHRhcmVhIn0sInBhc3N3b3JkIjp7InVpOndpZGdldCI6InBhc3N3b3JkIiwidWk6aGVscCI6IkhpbnQ6IE1ha2UgaXQgc3Ryb25nISJ9LCJ0ZWxlcGhvbmUiOnsidWk6b3B0aW9ucyI6eyJpbnB1dFR5cGUiOiJ0ZWwifX19LCJ0aGVtZSI6ImRlZmF1bHQiLCJsaXZlU2V0dGluZ3MiOnsic2hvd0Vycm9yTGlzdCI6InRvcCIsInZhbGlkYXRlIjpmYWxzZSwiZGlzYWJsZWQiOmZhbHNlLCJub0h0bWw1VmFsaWRhdGUiOmZhbHNlLCJyZWFkb25seSI6dHJ1ZSwib21pdEV4dHJhRGF0YSI6ZmFsc2UsImxpdmVPbWl0IjpmYWxzZSwiZXhwZXJpbWVudGFsX2RlZmF1bHRGb3JtU3RhdGVCZWhhdmlvciI6eyJhcnJheU1pbkl0ZW1zIjoicG9wdWxhdGUiLCJhbGxPZiI6InNraXBEZWZhdWx0cyIsImVtcHR5T2JqZWN0RmllbGRzIjoicG9wdWxhdGVBbGxEZWZhdWx0cyJ9fX0=)

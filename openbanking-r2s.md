@@ -149,7 +149,7 @@ sequenceDiagram
 1. The ASPSP performs an SCA by requesting a self-attested payment request credential as described in Request2sign[^r2s]. Thereby the authorization request must contain
     - the actual payload for the transaction in the `authorization_details` and 
     - the `presentation_definition` requesting a self-attested credential that will include the payload.
-2. The `input_descriptor` with the `id` `request2sign_input` will also provide a JSON schema the wallet can use to dynamically generate a form to display the content of the `authorization_details` to the user and ask for consent.
+2. The `input_descriptor` with the `id` `request2sign_input` will also provide a JSON schema the wallet can use to dynamically generate a form to display the content of the `authorization_details` to the user and ask for consent[^js_an_example].
 3. The user consents to the presentation of the payment request credential by providing the first factor like a wallet PIN or biometrics.
 4. The wallet creates a payment request credential linked dynamically to the transaction by including the transaction details and signs it using the private key as the second factor.
 5. The payment request credential is send to the ASPSP as part of the authorization response.
@@ -208,51 +208,60 @@ Example of a complete authorization request object:
                 "properties": {
                   "instructedAmount": {
                     "type": "object",
+                    "title": "Amount",
                     "properties": {
-                      "currency": {
-                        "type": "string",
-                        "title": "Currency",
-                        "description": "Currency the amount is payed in."
-                      },
                       "amount": {
                         "type": "string",
                         "title": "Amount",
-                        "description": "Amount of money to pay.",
-                        "example": "1.99"
+                        "description": "Amount to pay"
+                      },
+                      "currency": {
+                        "type": "string",
+                        "title": "Currency",
+                        "description": "Currency to pay in"
                       }
                     },
                     "required": [
-                      "currency",
-                      "amount"
+                      "amount",
+                      "currency"
                     ]
                   },
-                  "creditorName": {
+                  "transactionID": {
                     "type": "string",
-                    "title": "Creditor",
-                    "description": "Creditor receiving the money"
+                    "title": "Transaction ID",
+                    "description": "Unique transaction identifier"
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "title": "Purpose",
+                    "description": "Purpose of the transaction"
                   },
                   "creditorAccount": {
                     "type": "object",
+                    "title": "Creditor",
                     "properties": {
                       "iban": {
                         "type": "string",
-                        "title": "IBAN"
+                        "title": "IBAN",
+                        "description": "IBAN of the creditor"
+                      },
+                      "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "description": "Name of the creditor"
                       }
                     },
                     "required": [
-                      "iban"
+                      "iban",
+                      "name"
                     ]
-                  },
-                  "remittanceInformationUnstructured": {
-                    "type": "string",
-                    "title": "Purpose"
                   }
                 },
                 "required": [
                   "instructedAmount",
-                  "creditorName",
-                  "creditorAccount",
-                  "remittanceInformationUnstructured"
+                  "transactionID",
+                  "purpose",
+                  "creditorAccount"
                 ]
               }
             },
@@ -361,3 +370,4 @@ sequenceDiagram
 [^openid4vp]: [OpenID4VP - draft 20](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 [^openid4vci]: [OpenID4VCI - draft 13](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
 [^did]:[Decentralized Identifiers - DIDs v1.0](https://www.w3.org/TR/did-core/)
+[^js_an_example]: [Example dynamic form generation based on JSON Schema](https://rjsf-team.github.io/react-jsonschema-form/#eyJmb3JtRGF0YSI6eyJpbnN0cnVjdGVkQW1vdW50Ijp7ImFtb3VudCI6IjUuNTkiLCJjdXJyZW5jeSI6IkVVUiJ9LCJ0cmFuc2FjdGlvbklEIjoiQ0RGODM0RjQtNUNGNC00QTI3LTlDMDQtOUVFQjM0N0JGIiwicHVycG9zZSI6IlNob3BwaW5nIHNvbWV3aGVyZSIsImNyZWRpdG9yQWNjb3VudCI6eyJpYmFuIjoiREU4ODk0MDU5NDIxMDAyMDgwMTg5MCIsIm5hbWUiOiJNZXJjaGFudCBBIn19LCJzY2hlbWEiOnsiJHNjaGVtYSI6Imh0dHA6Ly9qc29uLXNjaGVtYS5vcmcvZHJhZnQtMDQvc2NoZW1hIyIsInR5cGUiOiJvYmplY3QiLCJwcm9wZXJ0aWVzIjp7Imluc3RydWN0ZWRBbW91bnQiOnsidHlwZSI6Im9iamVjdCIsInRpdGxlIjoiQW1vdW50IiwicHJvcGVydGllcyI6eyJhbW91bnQiOnsidHlwZSI6InN0cmluZyIsInRpdGxlIjoiQW1vdW50IiwiZGVzY3JpcHRpb24iOiJBbW91bnQgdG8gcGF5In0sImN1cnJlbmN5Ijp7InR5cGUiOiJzdHJpbmciLCJ0aXRsZSI6IkN1cnJlbmN5IiwiZGVzY3JpcHRpb24iOiJDdXJyZW5jeSB0byBwYXkgaW4ifX0sInJlcXVpcmVkIjpbImFtb3VudCIsImN1cnJlbmN5Il19LCJ0cmFuc2FjdGlvbklEIjp7InR5cGUiOiJzdHJpbmciLCJ0aXRsZSI6IlRyYW5zYWN0aW9uIElEIiwiZGVzY3JpcHRpb24iOiJVbmlxdWUgdHJhbnNhY3Rpb24gaWRlbnRpZmllciJ9LCJwdXJwb3NlIjp7InR5cGUiOiJzdHJpbmciLCJ0aXRsZSI6IlB1cnBvc2UiLCJkZXNjcmlwdGlvbiI6IlB1cnBvc2Ugb2YgdGhlIHRyYW5zYWN0aW9uIn0sImNyZWRpdG9yQWNjb3VudCI6eyJ0eXBlIjoib2JqZWN0IiwidGl0bGUiOiJDcmVkaXRvciIsInByb3BlcnRpZXMiOnsiaWJhbiI6eyJ0eXBlIjoic3RyaW5nIiwidGl0bGUiOiJJQkFOIiwiZGVzY3JpcHRpb24iOiJJQkFOIG9mIHRoZSBjcmVkaXRvciJ9LCJuYW1lIjp7InR5cGUiOiJzdHJpbmciLCJ0aXRsZSI6Ik5hbWUiLCJkZXNjcmlwdGlvbiI6Ik5hbWUgb2YgdGhlIGNyZWRpdG9yIn19LCJyZXF1aXJlZCI6WyJpYmFuIiwibmFtZSJdfX0sInJlcXVpcmVkIjpbImluc3RydWN0ZWRBbW91bnQiLCJ0cmFuc2FjdGlvbklEIiwicHVycG9zZSIsImNyZWRpdG9yQWNjb3VudCJdfSwidWlTY2hlbWEiOnsiZmlyc3ROYW1lIjp7InVpOmF1dG9mb2N1cyI6dHJ1ZSwidWk6ZW1wdHlWYWx1ZSI6IiIsInVpOnBsYWNlaG9sZGVyIjoidWk6ZW1wdHlWYWx1ZSBjYXVzZXMgdGhpcyBmaWVsZCB0byBhbHdheXMgYmUgdmFsaWQgZGVzcGl0ZSBiZWluZyByZXF1aXJlZCIsInVpOmF1dG9jb21wbGV0ZSI6ImZhbWlseS1uYW1lIiwidWk6ZW5hYmxlTWFya2Rvd25JbkRlc2NyaXB0aW9uIjp0cnVlLCJ1aTpkZXNjcmlwdGlvbiI6Ik1ha2UgdGV4dCAqKmJvbGQqKiBvciAqaXRhbGljKi4gVGFrZSBhIGxvb2sgYXQgb3RoZXIgb3B0aW9ucyBbaGVyZV0oaHR0cHM6Ly9tYXJrZG93bi10by1qc3gucXVhbnRpem9yLmRldi8pLiJ9LCJsYXN0TmFtZSI6eyJ1aTphdXRvY29tcGxldGUiOiJnaXZlbi1uYW1lIiwidWk6ZW5hYmxlTWFya2Rvd25JbkRlc2NyaXB0aW9uIjp0cnVlLCJ1aTpkZXNjcmlwdGlvbiI6Ik1ha2UgdGhpbmdzICoqYm9sZCoqIG9yICppdGFsaWMqLiBFbWJlZCBzbmlwcGV0cyBvZiBgY29kZWAuIDxzbWFsbD5BbmQgdGhpcyBpcyBhIHNtYWxsIHRleHRzLjwvc21hbGw+ICJ9LCJhZ2UiOnsidWk6d2lkZ2V0IjoidXBkb3duIiwidWk6dGl0bGUiOiJBZ2Ugb2YgcGVyc29uIiwidWk6ZGVzY3JpcHRpb24iOiIoZWFydGggeWVhcikifSwiYmlvIjp7InVpOndpZGdldCI6InRleHRhcmVhIn0sInBhc3N3b3JkIjp7InVpOndpZGdldCI6InBhc3N3b3JkIiwidWk6aGVscCI6IkhpbnQ6IE1ha2UgaXQgc3Ryb25nISJ9LCJ0ZWxlcGhvbmUiOnsidWk6b3B0aW9ucyI6eyJpbnB1dFR5cGUiOiJ0ZWwifX19LCJ0aGVtZSI6ImRlZmF1bHQiLCJsaXZlU2V0dGluZ3MiOnsic2hvd0Vycm9yTGlzdCI6InRvcCIsInZhbGlkYXRlIjpmYWxzZSwiZGlzYWJsZWQiOmZhbHNlLCJub0h0bWw1VmFsaWRhdGUiOmZhbHNlLCJyZWFkb25seSI6dHJ1ZSwib21pdEV4dHJhRGF0YSI6ZmFsc2UsImxpdmVPbWl0IjpmYWxzZSwiZXhwZXJpbWVudGFsX2RlZmF1bHRGb3JtU3RhdGVCZWhhdmlvciI6eyJhcnJheU1pbkl0ZW1zIjoicG9wdWxhdGUiLCJhbGxPZiI6InNraXBEZWZhdWx0cyIsImVtcHR5T2JqZWN0RmllbGRzIjoicG9wdWxhdGVBbGxEZWZhdWx0cyJ9fX0=)
