@@ -1,5 +1,5 @@
 # Strong-customer-authentication for the European Digital Identity Wallet
-This repository contains papers and concepts on how the base protocols for the European Digital Identity Wallet (EUDIW) might be used to perform strong-customer-authentication (SCA) in the sense of the EU Revised Directive on Payment Services (PSD2).
+This repository contains papers and concepts on how the base protocols for the European Digital Identity Wallet (EUDIW) proposed by the [Architecture Reference Framework](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework) of the European Commission might be used to perform strong-customer-authentication (SCA) in the sense of the EU Revised Directive on Payment Services (PSD2).
 
 > [!NOTE]
 > DISCLAIMER: This publication is work-in-progress and will be progressively updated.
