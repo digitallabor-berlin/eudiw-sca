@@ -25,7 +25,7 @@ This specification defines the following terms.
 
 ## Flow
 
-This flow builds largly on already existing flows and features of OpenID4VP and its referenced specification. However, it defines certain keywords for the wallet to trigger the processing of the signing input and to include it within an self-attested credential.
+This flow builds largly on already existing flows and features of OpenID4VP and its referenced specifications. However, it defines certain keywords for the wallet to trigger the processing of the signing input and to include it within a self-attested credential.
 
 
 ```mermaid
@@ -45,19 +45,19 @@ sequenceDiagram
 ```
 
 1. The verifier sends an OpenID4VP authorization request to the wallet. The authorization request contains the signing input.
-2. The wallet presents the siging input to the holder and asks for consent to present it back to the verifier.
-3. The holder consent to the presentation.
+2. The wallet presents the signing input to the holder and asks for consent to present it back to the verifier.
+3. The holder consents to the presentation.
 4. The wallet issues a self-attested credential which includes the data of the signing input.
-5. The self-attested credential will be included in the presentation with the authorization response.
+5. The self-attested credential will be included in the presentation and send along with the authorization response.
 
 
 ## Authorization request
 
-The authorization request as defined in OpenID4VP[^openid4vp] section 5 MUST be transported as OAuth 2.0 rich authorization request to include a container holding the input data for the self-attested credential in the request parameter `authorization_details` as defined in RFC 9396, section 2[^rfc9396]. The `authorization_details` array hereby MUST include a JSON object with the `type` field set to the *keyword* value of `request2sign`. 
+The authorization request as defined in OpenID4VP section 5[^openid4vp] MUST be transported as OAuth 2.0 rich authorization request to include a container holding the input data for the self-attested credential in the request parameter `authorization_details` as defined in RFC 9396, section 2[^rfc9396]. The `authorization_details` array hereby MUST include a JSON object with the `type` field set to the *keyword* value of `request2sign`. 
 
 The `request2sign`object defines the following fields:
 
-- `payload`: REQUIRED. JSON object holding the actual data that must be signed by the wallet.
+- `payload`: REQUIRED. JSON object holding the signing input data that must be included in the self-attested credential by the wallet.
 
 Example of the `authorization_details`:
 
@@ -96,10 +96,10 @@ Example of the `authorization_details`:
 
 The `presentation_definition` used in the authorization request is a critical component within this flow and must adhere to the folllowing rules.
 
-1. It MUST include an `input_descriptor` by the id of `request2sign_input`. This keyword indicates to the wallet that a self-attested credential is requested which must include the signing input data submitted by the verifier within the authorization request. 
+1. It MUST include an `input_descriptor` by the `id` of `request2sign_input`. This keyword indicates to the wallet that a self-attested credential is requested which must include the signing input data send along by the verifier within the authorization request. 
 2. The `request2sign_input` input descriptor MUST request a self-attested credential using the `subject_is_issuer` property of the relational constraint feature described in Presentation Exchange 2.0, section 7.3[^dif_pe]. 
-3. The `request2sign_input` input descriptor MUST request a `field` with the id `request2sign_payload`. This field SHALL contain the signing input.
-4. The `filter` property of the `request2sign_payload` MUST include a JSON schema of the siging inputs data structure. The wallet MUST use this schema to dynamically render a UI Form to present the data to the holder while asking for consent. For an improved user experience, it is RECOMMENDED to make use of JSON schema annotations[^js_an] like `title`, `description` and `example`. 
+3. The `request2sign_input` input descriptor MUST request a `field` with the id `request2sign_payload`. This field will hold the signing input data.
+4. The `filter` property of the `request2sign_payload` MUST include a JSON schema of the singing input data structure. The wallet MUST use this schema to dynamically render a UI form to present the data to the holder while asking for consent. For an improved user experience, it is RECOMMENDED to make use of JSON schema annotations[^js_an] like `title`, `description` and `example`. 
 
 Example of a presentation definition requesting a self-attested credential issued by `did:example:sd5sde`:
 
@@ -216,5 +216,5 @@ The processing of an OpenID4VP authorization request by the wallet must be exten
 [^rfc2119]: [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119)
 [^rfc8174]: [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174)
 [^sca]: [Strong-Customer-Authentication](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32018R0389)
-[^dif_pe]: [Presentation Exchange 2.0.0](https://identity.foundation/presentation-exchange/spec/v2.0.0/#validation-of-claims)
+[^dif_pe]: [Presentation Exchange 2.0](https://identity.foundation/presentation-exchange/spec/v2.0.0/#validation-of-claims)
 [^js_an]: [JSON Schema Annotations](https://json-schema.org/understanding-json-schema/reference/annotations)
