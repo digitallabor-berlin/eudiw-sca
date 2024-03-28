@@ -15,7 +15,7 @@ This additional layer of security is essential to combat fraud in online transac
 - **Embedded**: The Embedded SCA approach described in XS2A section 5.1.8[^xs2a] involves a fully automated process where the payment is initiated on behalf of the Payment Service User (PSU) by the Third-Party Provider (TPP). In this method, the user shares their credentials with the TPP, who then authenticates and initiates the payment in the background, embedding the authentication process seamlessly within the transaction flow.
 - **Decoupled**: The Decoupled approach described in XS2A section 5.1.7[^xs2a] offers a convenient method to obtain SCA approval with minimal effort from the merchant or cardholder. This approach allows transactions to occur without the cardholder being actively engaged with the merchant's website or mobile application. Instead, authentication is conducted through alternative channels, such as mobile push notifications within banking apps, email, or other methods chosen by the Issuer bank to inform the cardholder of an authentication request from a merchant.
 
-This document is focussing on the option to leverage the OpenID4VP [^openid4vp] and OpenID4VCi [^openid4vci] specifications in order to introduce a standardized approach to allow compatible wallet applications to act as an authentication mean for SCA. 
+This document is focussing on the option to leverage the OpenID4VP[^openid4vp] and OpenID4VCi[^openid4vci] specifications in order to introduce a standardized approach to allow compatible wallet applications to act as an authentication mean for SCA. 
 
 
 ## Terminology
@@ -35,11 +35,11 @@ Brief description of a payment initation flow using a payment initiation service
 
 ## Onboarding
 
-Prior to using a wallet as a mean for SCA, it requires an onboarding to exchange a cryptographic key-set between the ASPSP and a customer wallet. The exchange is done by the ASPSP issuing a Payment credential using OpenID4VCi [^openid4vci]. 
+Prior to using a wallet as a mean for SCA, it requires an onboarding to exchange a cryptographic key-set between the ASPSP and a customer wallet. The exchange is done by the ASPSP issuing a payment credential using OpenID4VCi [^openid4vci]. 
 
 ### Payment Credential
 
-The Payment credential MUST be cryptographically bound to a dedicated private key created by the wallet and used to sign a `proof` while requesting the issuing of a Payment credential as described in OpenID4VCi, section 7.2 [^openid4vci]. The `proof` parameter is therefor always REQUIRED.
+The payment credential MUST be cryptographically bound to a dedicated private key created by the wallet and used to sign a `proof` while requesting the issuing of a Payment credential as described in OpenID4VCi, section 7.2[^openid4vci]. The `proof` parameter is therefor always REQUIRED.
 
 The `credentialSubject` includes the following properties:
 
@@ -95,7 +95,7 @@ sequenceDiagram
 ```
 
 1. The payee displays the payment details to the payer. The payer decides to pay by using his wallet and the issued payment credential.
-2. The payee requests the presentation of a Payment credential as defined by OpenID4VP [^openid4vp]. This is done either
+2. The payee requests the presentation of a Payment credential as defined by OpenID4VP[^openid4vp]. This is done either
     - **cross-device** by presenting it as a QR code / NFC Tag or
     - **same-device** by activating a link with a custom URL scheme.
 3. The payer selects an apropriate payment credential and consents to its presentation to the payee.
@@ -121,11 +121,11 @@ sequenceDiagram
 
 ```
 
-1. Once the payee verified the presented Payment credential, it initiates a payment using a payment initiation service provider (PISP). The presented Payment credential must be send along with the payment details.
-2. The PISP uses the information included in the Payment credential to initiate a payment at the payers ASPSP (aka the issuer of the Payment credential) utilizing an OpenBanking API payment initiation request.
+1. Once the payee verified the presented payment credential, it initiates a payment using a payment initiation service provider (PISP). The presented Payment credential must be send along with the payment details.
+2. The PISP uses the information included in the payment credential to initiate a payment at the payers ASPSP (aka the issuer of the payment credential) utilizing an OpenBanking API payment initiation request.
 3. In response, the ASPSP of the payer sends the link to authorize the payment to the PISP.
 4. The PISP forwards the authorization link to the merchant.
-5. The payee forwards the authorization link to the wallet. This step might be done as automatic redirect.
+5. The payee forwards the authorization link to the wallet. This step might be done as an automatic redirect.
 6. The wallet follows the authorization link to initiate the SCA.
 
 ### SCA payment authorization
@@ -150,7 +150,7 @@ sequenceDiagram
     - the actual payload for the transaction in the `authorization_details` and 
     - the `presentation_definition` requesting a self-attested credential that will include the payload.
 2. The `input_descriptor` with the `id` `request2sign_input` will also provide a JSON schema the wallet can use to dynamically generate a form to display the content of the `authorization_details` to the user and ask for consent.
-3. The user consents to the presentation of the payment request credential by providing the first factor like a wallet PIN or biomerics.
+3. The user consents to the presentation of the payment request credential by providing the first factor like a wallet PIN or biometrics.
 4. The wallet creates a payment request credential linked dynamically to the transaction by including the transaction details and signs it using the private key as the second factor.
 5. The payment request credential is send to the ASPSP as part of the authorization response.
 
