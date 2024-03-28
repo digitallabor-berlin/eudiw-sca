@@ -198,18 +198,6 @@ Example of a presentation definition requesting a self-attested credential issue
 }
 ```
 
-```mermaid
-
-block-beta
-columns 2
-  block
-    I("Currency") Y("dd")
-    A("Amount") B("am")
-  end
-  classDef exist fill:#696,stroke:#333;
-  class A exist
-```
-
 ### Processing
 
 The processing of an OpenID4VP authorization request by the wallet must be extended by the following steps.
