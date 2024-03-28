@@ -298,6 +298,11 @@ Example of a complete authorization request object:
 
 ```
 
+Example of a UI form rendered dynamically by the wallet[^js_an_example]:
+
+![Dynamic form generation](dynamic-form.png)
+
+
 Example of a self-attested payment request credential:
 
 ```json
