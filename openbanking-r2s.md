@@ -50,7 +50,7 @@ Example of an issued Payment credential.
 
 ```json
 {
-  "iss": "did:jwk:eyJjcnYiOiJQLi...,
+  "iss": "did:jwk:eyJjcnYiOiJQLi...",
   "jti": "dc961165-fb13-4d19-98f0-37c9bb06be",
   "nbf": 1707232027,
   "aud": "EUDIW",
