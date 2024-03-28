@@ -4,7 +4,11 @@ This repository contains papers and concepts on how the base protocols for the E
 > [!NOTE]
 > DISCLAIMER: This publication is work-in-progress and will be progressively updated.
 
+## Baseline Architecture proposed by the ARF
 ![Baseline Architecture](data-models-formats.png)
+
+
+## Buildingblocks
 
 ```mermaid
 block-beta
