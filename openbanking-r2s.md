@@ -105,33 +105,6 @@ sequenceDiagram
 3. The payer selects an apropriate payment credential and consents to its presentation to the payee.
 4. The payment credential is send to the payee.
 
-### Payment initiation
-
-```mermaid
-
-sequenceDiagram
-    autonumber
-    participant uw as EUDIW Wallet
-    participant payee as Payee
-    participant pisp as PISP
-    participant bank as ASPSP Payer
-
-    payee ->> pisp: request to initiate payment 
-    pisp ->> bank: payment initiation request
-    bank ->> pisp: payment initiation response
-    pisp ->> payee: Redirect Link for EUDIW SCA
-    payee ->> uw: Redirect to Link for SCA
-    uw ->> bank: Follow redirect
-
-```
-
-1. Once the payee verified the presented payment credential, it initiates a payment using a payment initiation service provider (PISP). The presented Payment credential must be send along with the payment details.
-2. The PISP uses the information included in the payment credential to initiate a payment at the payers ASPSP (aka the issuer of the payment credential) utilizing an OpenBanking API payment initiation request.
-3. In response, the ASPSP of the payer sends the link to authorize the payment to the PISP.
-4. The PISP forwards the authorization link to the merchant.
-5. The payee forwards the authorization link to the wallet. This step might be done as an automatic redirect.
-6. The wallet follows the authorization link to initiate the SCA.
-
 #### Technical flow
 
 ```mermaid
@@ -160,6 +133,34 @@ sequenceDiagram
 4. Wallet request consents to present the payment credential from the payer.
 5. Payer consents to the presentation.
 6. `HTTP POST` request including the OpenID4VP authorization response
+
+### Payment initiation
+
+```mermaid
+
+sequenceDiagram
+    autonumber
+    participant uw as EUDIW Wallet
+    participant payee as Payee
+    participant pisp as PISP
+    participant bank as ASPSP Payer
+
+    payee ->> pisp: request to initiate payment 
+    pisp ->> bank: payment initiation request
+    bank ->> pisp: payment initiation response
+    pisp ->> payee: Redirect Link for EUDIW SCA
+    payee ->> uw: Redirect to Link for SCA
+    uw ->> bank: Follow redirect
+
+```
+
+1. Once the payee verified the presented payment credential, it initiates a payment using a payment initiation service provider (PISP). The presented Payment credential must be send along with the payment details.
+2. The PISP uses the information included in the payment credential to initiate a payment at the payers ASPSP (aka the issuer of the payment credential) utilizing an OpenBanking API payment initiation request.
+3. In response, the ASPSP of the payer sends the link to authorize the payment to the PISP.
+4. The PISP forwards the authorization link to the merchant.
+5. The payee forwards the authorization link to the wallet. This step might be done as an automatic redirect.
+6. The wallet follows the authorization link to initiate the SCA.
+
 
 ### SCA payment authorization
 
