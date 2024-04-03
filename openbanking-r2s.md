@@ -90,31 +90,6 @@ sequenceDiagram
     participant uw as EUDIW Wallet
     participant payee as Payee
 
-    payee ->> payer: Displays payment details
-    payee ->> uw: Authorization request
-
-    note right of uw:  Request payment credential
-    uw ->> payer: Consent
-    uw ->> payee: presents paymement credential
-```
-
-1. The payee displays the payment details to the payer. The payer decides to pay by using his wallet and the issued payment credential.
-2. The payee requests the presentation of a Payment credential as defined by OpenID4VP[^openid4vp]. This is done either
-    - **cross-device** by presenting it as a QR code / NFC Tag or
-    - **same-device** by activating a link with a custom URL scheme.
-3. The payer selects an apropriate payment credential and consents to its presentation to the payee.
-4. The payment credential is send to the payee.
-
-#### Technical flow
-
-```mermaid
-
-sequenceDiagram
-    autonumber
-    actor payer as Payer
-    participant uw as EUDIW Wallet
-    participant payee as Payee
-
     payee ->> uw: Present authorization request URL
     uw ->> payee: HTTP GET authorization request object
     payee ->> uw: HTTP RESP 200 authorization request object
