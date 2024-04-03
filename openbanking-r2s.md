@@ -105,10 +105,10 @@ sequenceDiagram
     - **cross-device** by presenting it as a QR code / NFC Tag or
     - **same-device** by activating a link with a custom URL scheme.
 2. `HTTP GET` to load the OpenID4VP authorization request object
-3. `HTTP GET 200` response including the OpenID4VP authorization request object. The included `presentation_definition` requests a valid payment credential from the wallet.
+3. `HTTP GET 200` response including the OpenID4VP authorization request object. The included `presentation_definition` requests the presentation of a valid payment credential from the wallet.
 4. Wallet request consents to present the payment credential from the payer.
 5. Payer consents to the presentation.
-6. `HTTP POST` OpenID4VP authorization response. The response includes a presentation of a payment credential. This will trigger the initation of a payment.
+6. `HTTP POST` OpenID4VP authorization response. The response includes a verifiable presentation of a payment credential. This will trigger the initation of a payment.
     Note over payee: initate payment... 
 7. `HTTP POST` 302 Redirect to SCA
 
@@ -165,13 +165,13 @@ sequenceDiagram
 1. `HTTP GET` to load the OpenID4VP authorization request for the SCA 
 2. `HTTP 200` response including the OpenID4VP authorization request, which must contain
     - the actual payload for the transaction in the `authorization_details` and 
-    - the `presentation_definition` requesting a self-attested credential that will include the payload from the `authorization_details` as described in Request2sign[^r2s]. 
+    - the `presentation_definition` requesting the presentation of a self-attested credential that will include the payload from the `authorization_details` as described in Request2sign[^r2s]. 
 3. The wallet presents the payment details to the payer. The `input_descriptor` of the `payment_definition` with the `id` `request2sign_input` will also provide a JSON schema the wallet can use to dynamically generate a form to display the content of the `authorization_details` to the payer and ask for consent[^js_an_example].
 4. The user consents to the presentation of the payment request credential by providing the first factor like a wallet PIN or biometrics.
 5. The wallet creates a payment request credential presentation linked dynamically to the transaction by including the transaction details and signs it using the private key as the second factor.
-6. `HTTP POST` including the OpenID4VP authorization response and the signed payment request credential.
-7. The ASPSP verifies the payment request credential using the public key of the payer and executes the payment.
-8. `HTTP 200`  signals the wallet that the credential has been received and verified successfully. Depending on the payment rail, it might also indicate the successful execution of a payment.
+6. `HTTP POST` including the OpenID4VP authorization response and the verifiable presentation of the self-attested payment request credential.
+7. The ASPSP verifies the verfiable presentation of the payment request credential using the public key of the payer and executes the payment.
+8. `HTTP 200`  signals the wallet that the verifiable presentation has been received and verified successfully. Depending on the payment rail, it might also indicate the successful execution of a payment.
 
 Example of a complete authorization request object:
 
