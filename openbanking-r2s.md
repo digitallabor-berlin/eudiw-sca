@@ -104,11 +104,11 @@ sequenceDiagram
 1. The payee requests the presentation of a Payment credential as defined by OpenID4VP[^openid4vp]. The authorization request URL is tranmitted
     - **cross-device** by presenting it as a QR code / NFC Tag or
     - **same-device** by activating a link with a custom URL scheme.
-2. `HTTP GET` request to load the OpenID4VP authorization request object
-3. `HTTP GET 200` response including the OpenID4VP authorization request object
+2. `HTTP GET` to load the OpenID4VP authorization request object
+3. `HTTP GET 200` response including the OpenID4VP authorization request object. The included `presentation_definition` requests a valid payment credential from the wallet.
 4. Wallet request consents to present the payment credential from the payer.
 5. Payer consents to the presentation.
-6. `HTTP POST` request including the OpenID4VP authorization response. This will trigger the initation of a payment.
+6. `HTTP POST` OpenID4VP authorization response. The response includes a presentation of a payment credential. This will trigger the initation of a payment.
     Note over payee: initate payment... 
 7. `HTTP POST` 302 Redirect to payment authorization
 
