@@ -133,7 +133,9 @@ sequenceDiagram
 3. `HTTP GET 200` response including the OpenID4VP authorization request object
 4. Wallet request consents to present the payment credential from the payer.
 5. Payer consents to the presentation.
-6. `HTTP POST` request including the OpenID4VP authorization response
+6. `HTTP POST` request including the OpenID4VP authorization response. This will trigger the initation of a payment.
+    Note over payee: initate payment... 
+7. `HTTP POST` 302 Redirect to payment authorization
 
 ### Payment initiation
 
