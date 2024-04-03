@@ -43,8 +43,10 @@ The payment credential MUST be cryptographically bound to a dedicated private ke
 
 The `credentialSubject` includes the following properties:
 
+- `id`: REQUIRED. Unique ID of the credential
 - `aspsp_name`: RECOMMENDED. Name of the issuing ASPSP.
-- `iban`: REQUIRED.
+- `account_alias`: REQUIRED.
+
 
 Example of an issued Payment credential.
 
@@ -66,13 +68,43 @@ Example of an issued Payment credential.
       "PaymentKey"
     ],
     "credentialSubject": {
+      "id" : "s4dft5f"
       "aspsp_name": "Super Bank",
-      "iban": "DE40100100103307118608"
+      "account_alias": "MyAccount"
     }
   }
 }
 
 ```
+
+### Technical flow
+
+```mermaid
+
+sequenceDiagram
+    autonumber
+    actor payer as Payer
+    participant uw as EUDIW Wallet
+    participant payee as Payee
+
+    payee ->> uw: Present authorization request URL
+    uw ->> payee: HTTP REQ GET authorization request object
+    payee ->> uw: HTTP RESP 200 authorization request object
+
+    uw ->> payer: request consent 
+    payer ->> uw: consents to presentation
+    uw ->> payee: HTTP REQ POST authorization response
+    payee ->> uw: HTTP RESP 302 authorization response
+```
+
+1. The payee requests the presentation of a Payment credential as defined by OpenID4VP[^openid4vp]. The authorization request URL is tranmitted
+    - **cross-device** by presenting it as a QR code / NFC Tag or
+    - **same-device** by activating a link with a custom URL scheme.
+2. `HTTP GET` request to load the OpenID4VP authorization request object
+3. `HTTP GET 200` response including the OpenID4VP authorization request object
+4. Wallet request consents to present the payment credential from the payer.
+5. Payer consents to the presentation.
+6. `HTTP POST` request including the OpenID4VP authorization response
 
 ## Payment
 
