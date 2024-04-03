@@ -116,12 +116,13 @@ sequenceDiagram
     participant payee as Payee
 
     payee ->> uw: Present authorization request URL
-    uw ->> payee: HTTP REQ GET authorization request object
+    uw ->> payee: HTTP GET authorization request object
     payee ->> uw: HTTP RESP 200 authorization request object
 
     uw ->> payer: request consent 
     payer ->> uw: consents to presentation
-    uw ->> payee: HTTP REQ POST authorization response
+    uw ->> payee: HTTP POST authorization response
+    Note over payee: initate payment... 
     payee ->> uw: HTTP RESP 302 authorization response
 ```
 
