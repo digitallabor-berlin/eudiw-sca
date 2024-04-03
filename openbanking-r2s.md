@@ -110,7 +110,7 @@ sequenceDiagram
 5. Payer consents to the presentation.
 6. `HTTP POST` OpenID4VP authorization response. The response includes a presentation of a payment credential. This will trigger the initation of a payment.
     Note over payee: initate payment... 
-7. `HTTP POST` 302 Redirect to payment authorization
+7. `HTTP POST` 302 Redirect to SCA
 
 ### Payment initiation
 
@@ -127,7 +127,7 @@ sequenceDiagram
     pisp ->> bank: payment initiation request
     bank ->> pisp: payment initiation response
     pisp ->> payee: Redirect Link for EUDIW SCA
-    payee ->> uw: Redirect to Link for SCA
+    payee -->> uw: HTTP 302 Redirect to Link for SCA
     uw ->> bank: Follow redirect
 
 ```
@@ -136,7 +136,7 @@ sequenceDiagram
 2. The PISP uses the information included in the payment credential to initiate a payment at the payers ASPSP (aka the issuer of the payment credential) utilizing an OpenBanking API payment initiation request.
 3. In response, the ASPSP of the payer sends the link to authorize the payment to the PISP.
 4. The PISP forwards the authorization link to the merchant.
-5. The payee forwards the authorization link to the wallet. This step might be done as an automatic redirect.
+5. `HTTP 302` The payee forwards the SCA authorization link to the wallet as respone to the presentation of the payment credential.
 6. The wallet follows the authorization link to initiate the SCA.
 
 
@@ -151,20 +151,27 @@ sequenceDiagram
     participant uw as EUDIW Wallet
     participant bank as ASPSP Payer
     
-    bank ->> uw: Authorization request
+    uw ->> bank: HTTP GET Authorization request object
+    bank -->> uw: HTTP 200 Authorization request object
     uw->>payer: Payment details
     payer->> uw: consent
     uw->>uw: sign
-    uw->>bank: Authorization response
+    uw->>bank: HTTP POST Authorization response
+    bank ->> bank: Verify and execute payment
+    bank -->> uw: Authorization response OK
+
 ```
 
-1. The ASPSP performs an SCA by requesting a self-attested payment request credential as described in Request2sign[^r2s]. Thereby the authorization request must contain
+1. `HTTP GET` to load the OpenID4VP authorization request for the SCA 
+2. `HTTP 200` response including the OpenID4VP authorization request, which must contain
     - the actual payload for the transaction in the `authorization_details` and 
-    - the `presentation_definition` requesting a self-attested credential that will include the payload.
-2. The `input_descriptor` with the `id` `request2sign_input` will also provide a JSON schema the wallet can use to dynamically generate a form to display the content of the `authorization_details` to the user and ask for consent[^js_an_example].
-3. The user consents to the presentation of the payment request credential by providing the first factor like a wallet PIN or biometrics.
-4. The wallet creates a payment request credential linked dynamically to the transaction by including the transaction details and signs it using the private key as the second factor.
-5. The payment request credential is send to the ASPSP as part of the authorization response.
+    - the `presentation_definition` requesting a self-attested credential that will include the payload from the `authorization_details` as described in Request2sign[^r2s]. 
+3. The wallet presents the payment details to the payer. The `input_descriptor` of the `payment_definition` with the `id` `request2sign_input` will also provide a JSON schema the wallet can use to dynamically generate a form to display the content of the `authorization_details` to the payer and ask for consent[^js_an_example].
+4. The user consents to the presentation of the payment request credential by providing the first factor like a wallet PIN or biometrics.
+5. The wallet creates a payment request credential presentation linked dynamically to the transaction by including the transaction details and signs it using the private key as the second factor.
+6. `HTTP POST` including the OpenID4VP authorization response and the signed payment request credential.
+7. The ASPSP verifies the payment request credential using the public key of the payer and executes the payment.
+8. `HTTP 200`  signals the wallet that the credential has been received and verified successfully. Depending on the payment rail, it might also indicate the successful execution of a payment.
 
 Example of a complete authorization request object:
 
@@ -365,8 +372,6 @@ sequenceDiagram
     participant pisp as PISP
     participant bank as ASPSP Payer
     
-    bank ->> bank: Verify and execute payment
-    bank ->> uw: Authorization response OK
     pisp ->> bank: Payment status request
     bank ->> pisp: Payment status response
     pisp ->> payee: Payment status
@@ -374,12 +379,10 @@ sequenceDiagram
 
 ```
 
-1. The ASPSP verifies the payment request credential using the public key of the payer.
-2. The ASPSP signals the wallet that the credential has been received and verified successfully.
-3. The PISP polls the status of the payment using OpenBanking APIs. Alternativly this might also be done using a dedicated callback if offered by the ASPSP.
-4. The ASPSP communicates the status of the payment to the PISP.
-5. The PISP communicates the status of the payment to the payee.
-6. The PISP communicates the status of the payment to the payer.
+1. The PISP polls the status of the payment using OpenBanking APIs. Alternativly this might also be done using a dedicated callback if offered by the ASPSP.
+2. The ASPSP communicates the status of the payment to the PISP.
+3. The PISP communicates the status of the payment to the payee.
+4. The PISP communicates the status of the payment to the payer.
 
 
 [^xs2a]: [NextGenPSD2 XS2A Framework Implementation Guidelines](https://www.berlin-group.org/_files/ugd/c2914b_fec1852ec9c640568f5c0b420acf67d2.pdf)
