@@ -33,11 +33,11 @@ In order to make the process and the examples clearer, this document makes some 
 
 Brief description of a payment initation flow using a payment initiation service (PIS) described in XS2A section 5[^xs2a]. Note: Besides payment initiation, the flow can also be used to authorize other kind of transaction like logging into online banking e.g.. 
 
-## Onboarding
+### Onboarding
 
 Prior to using a wallet as a mean for SCA, it requires an onboarding to exchange a cryptographic key-set between the ASPSP and a customer wallet. The exchange is done by the ASPSP issuing a payment credential using OpenID4VCi [^openid4vci]. 
 
-### Payment Credential
+#### Payment Credential
 
 The payment credential MUST be cryptographically bound to a dedicated private key created by the wallet and used to sign a `proof` while requesting the issuing of a Payment credential as described in OpenID4VCi, section 7.2[^openid4vci]. The `proof` parameter is therefor always REQUIRED.
 
@@ -46,6 +46,7 @@ The `credentialSubject` includes the following properties:
 - `id`: REQUIRED. Unique ID of the credential
 - `aspsp_name`: RECOMMENDED. Name of the issuing ASPSP.
 - `account_alias`: REQUIRED.
+- `bic`: REQUIRED. Business Identifier Code of the Bank.
 
 
 Example of an issued Payment credential.
@@ -68,19 +69,32 @@ Example of an issued Payment credential.
       "PaymentKey"
     ],
     "credentialSubject": {
-      "id" : "s4dft5f"
+      "id" : "s4dft5f",
       "aspsp_name": "Super Bank",
-      "account_alias": "MyAccount"
+      "account_alias": "MyAccount",
+      "bic": "DEUTDEFFXXX"
     }
   }
 }
 
 ```
 
+### Payment
 
-## Payment
+#### Screenflow
 
-### Present payment credential
+Same-device screenflow of the payment process:
+
+![Screenflow](screenflow.svg)
+
+1. Merchant app initiates the process by requesting the presentation of a payment credential.
+2. Redirect to wallet. Wallet asking the payer to consent to the presentation of a payment credential. If more than one suitable payment credential is available, they have to choose one. 
+    - Consent might include biometrics or PIN.
+3. Wallet displays the payment details and asks for content to the presentation.
+    - Consent must include biometrics or PIN.
+4. Purchase is completed.
+
+#### Present payment credential
 
 ```mermaid
 
@@ -112,7 +126,7 @@ sequenceDiagram
     Note over payee: initate payment... 
 7. `HTTP POST` 302 Redirect to SCA
 
-### Payment initiation
+#### Payment initiation
 
 ```mermaid
 
@@ -140,7 +154,7 @@ sequenceDiagram
 6. The wallet follows the authorization link to initiate the SCA.
 
 
-### SCA payment authorization
+#### SCA payment authorization
 
 
 ```mermaid
@@ -360,7 +374,7 @@ Example of a self-attested payment request credential:
 
 ```
 
-### Payment Status
+#### Payment Status
 
 ```mermaid
 
