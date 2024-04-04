@@ -48,6 +48,9 @@ The `credentialSubject` includes the following properties:
 - `account_alias`: REQUIRED.
 - `bic`: REQUIRED. Business Identifier Code of the Bank.
 
+> [!NOTE]
+> Depending on the actual payment rail, the payment credential might include other / additional properties.
+
 
 Example of an issued Payment credential.
 
