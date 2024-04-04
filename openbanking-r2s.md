@@ -104,7 +104,7 @@ Same-device screenflow of the payment process:
 sequenceDiagram
     autonumber
     actor payer as Payer
-    participant uw as EUDIW Wallet
+    participant uw as Wallet
     participant payee as Payee
 
     payee ->> uw: Present authorization request URL
@@ -135,7 +135,7 @@ sequenceDiagram
 
 sequenceDiagram
     autonumber
-    participant uw as EUDIW Wallet
+    participant uw as Wallet
     participant payee as Payee
     participant pisp as PISP
     participant bank as ASPSP Payer
@@ -153,7 +153,7 @@ sequenceDiagram
 2. The PISP uses the information included in the payment credential to initiate a payment at the payers ASPSP (aka the issuer of the payment credential) utilizing an OpenBanking API payment initiation request.
 3. In response, the ASPSP of the payer sends the link to authorize the payment to the PISP.
 4. The PISP forwards the authorization link to the merchant.
-5. `HTTP 302` The payee forwards the SCA authorization link to the wallet as respone to the presentation of the payment credential.
+5. `HTTP 302` The payee redirects the wallet to the SCA authorization link as response to the presentation of the payment credential.
 6. The wallet follows the authorization link to initiate the SCA.
 
 
@@ -165,7 +165,7 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     participant payer as Payer
-    participant uw as EUDIW Wallet
+    participant uw as Wallet
     participant bank as ASPSP Payer
     
     uw ->> bank: HTTP GET Authorization request object
@@ -384,7 +384,7 @@ Example of a self-attested payment request credential:
 sequenceDiagram
     autonumber
     participant payer as Payer
-    participant uw as EUDIW Wallet
+    participant uw as Wallet
     participant payee as Payee
     participant pisp as PISP
     participant bank as ASPSP Payer
