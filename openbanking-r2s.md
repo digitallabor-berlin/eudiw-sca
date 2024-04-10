@@ -125,7 +125,7 @@ sequenceDiagram
 3. `HTTP GET 200` response including the OpenID4VP authorization request object. The included `presentation_definition` requests the presentation of a valid payment credential from the wallet.
 4. Wallet request consents to present the payment credential from the payer.
 5. Payer consents to the presentation.
-6. `HTTP POST` OpenID4VP authorization response. The response includes a verifiable presentation of a payment credential. This will trigger the initation of a payment.
+6. `HTTP POST` OpenID4VP authorization response using `response_mode=direct_post`. The response includes a verifiable presentation of a payment credential. This will trigger the initation of a payment.
     Note over payee: initate payment... 
 7. `HTTP POST` 302 Redirect to SCA
 
@@ -153,7 +153,7 @@ sequenceDiagram
 2. The PISP uses the information included in the payment credential to initiate a payment at the payers ASPSP (aka the issuer of the payment credential) utilizing an OpenBanking API payment initiation request.
 3. In response, the ASPSP of the payer sends the link to authorize the payment to the PISP.
 4. The PISP forwards the authorization link to the merchant.
-5. `HTTP 302` The payee redirects the wallet to the SCA authorization link as response to the presentation of the payment credential.
+5. `HTTP 302` The payee redirects the wallet to the SCA authorization link as response to the presentation of the payment credential using `response_mode=direct_post`. As an alternative the merchant may display the link that has to be activated by the user.
 6. The wallet follows the authorization link to initiate the SCA.
 
 
