@@ -276,7 +276,7 @@ sequenceDiagram
 
 ## Dynamic Authentication Code
 
-The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic pricple would be to combine a fresh, cryptographically random number with the actual payment details.
+The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic priciple would be to combine a fresh, cryptographically random number with the actual payment details and generate a hash.
 
 ```bash
 > authorization_code="CPxpkYdz2ECNwYAx:123,49:EUR:Merchant A:DE88940594210020801890"
