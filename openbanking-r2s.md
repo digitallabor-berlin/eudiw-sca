@@ -49,16 +49,13 @@ This document is focussing on the option to leverage the OpenID4VP[^openid4vp] a
 - **Decentralized Identifier**: An identifier with its core ability being enabling Clients to obtain key material and other metadata by reference, defined in DID Core [^did].
 
 
-## Disclaimer
-In order to make the process and the examples clearer, this document makes some opinionated choices regarding formats, schemas, identifiers etc. which might differ in a complex real world scenario. 
-
 ## Flow
 
 Brief description of a payment initation flow using a payment initiation service (PIS) described in XS2A section 5[^xs2a]. Note: Besides payment initiation, the flow can also be used to authorize other kind of transaction like logging into online banking e.g.. 
 
 ### Onboarding
 
-Prior to using a wallet as a mean for SCA, it requires an onboarding to exchange a cryptographic key-set between the ASPSP and a customer wallet. The exchange is done by the ASPSP issuing a payment credential using OpenID4VCi [^openid4vci]. 
+Prior to using a wallet as a mean for SCA, it requires an onboarding to exchange a cryptographic key-set between the ASPSP and a customer wallet. The exchange is done by the ASPSP issuing a payment credential using OpenID4VCI [^openid4vci]. The private key will be created exclusivly for the presentation of the payment credential as also required by the European Commisions Architecture Reference Framework[^arf] stating that *"for each attestation, the EUDI Wallet Instance has access to an attestation private key, which is stored in the WSCD in (or connected to) the User’s device"*. The private key provides one of the authentication factors (possesion) for SCA. The access to the private always needs to be protected by the wallet using a second factor being either a PIN (knowledge) or biometrics (inherence).
 
 #### Payment Credential
 
@@ -206,9 +203,9 @@ sequenceDiagram
 2. `HTTP 200` response including the OpenID4VP authorization request, which must contain
     - `nonce` value calculated by hashing the transaction details as described [here](#dynamic-authentication-code) and
     - the `presentation_definition` requesting the presentation of the payment credential. The `input_descriptor` MUST include the `purpose` property, which contains the details of the payment like amount and payee. 
-3. The wallet presents the `purpose` of the presentation request to the payer.
-4. The user consents to the presentation of the payment  credential by providing the first factor like a wallet PIN or biometrics.
-5. The wallet creates a payment credential presentation linked dynamically to the transaction by including the `nonce` value as described in OpenID4VP section 12.1 [^openid4vp].
+3. The wallet presents the `purpose` of the presentation request to the payer informing him about the amount, currency and the payee of the transaction.
+4. The user consents to the presentation of the payment credential by providing the **first factor like a wallet PIN or biometrics**.
+5. The wallet creates a payment credential presentation **signed with the private key created during the onboard as a second factor** and linked dynamically to the transaction by including the `nonce` value as described in OpenID4VP section 12.1 [^openid4vp].
 6. `HTTP POST` including the OpenID4VP authorization response and the verifiable presentation of the payment credential.
 7. The ASPSP verifies the verfiable presentation of the payment credential using the public key of the payer and executes the payment.
 8. `HTTP 200`  signals the wallet that the verifiable presentation has been received and verified successfully. Depending on the payment rail, it might also indicate the successful execution of a payment.
@@ -276,12 +273,12 @@ sequenceDiagram
 
 ## Dynamic Authentication Code
 
-The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic priciple would be to combine a fresh, cryptographically random number with the actual payment details and generate a hash.
+The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic priciple would be to generate a hash using the actual payment details.
 
 ```bash
-> authorization_code="CPxpkYdz2ECNwYAx:123,49:EUR:Merchant A:DE88940594210020801890"
+> authorization_code="2024-03-21T09:46:14:123,49:EUR:Merchant A:DE88940594210020801890"
 > echo $authorization_code | sha256sum
-18be65c48f895fd22c26ae04aa31d9df658cdeb2533b793a497570bc9a59e577
+a3d9920740983f6a1fa73d77dda0bb90deea873b2ecd91d8f0685270d9e96a3b
 ```
 
 
@@ -289,3 +286,4 @@ The requirements of the PSD2 regarding the dynamic linking of the SCA to a speci
 [^openid4vp]: [OpenID4VP - draft 20](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 [^openid4vci]: [OpenID4VCI - draft 13](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
 [^did]:[Decentralized Identifiers - DIDs v1.0](https://www.w3.org/TR/did-core/)
+[^arf]:[Architecture Reference Framework 1.3](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/releases/download/v1.3.0/ARF-v1.3.0-for-publication.pdf)
