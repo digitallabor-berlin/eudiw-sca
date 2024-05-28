@@ -273,7 +273,8 @@ sequenceDiagram
 
 ## Dynamic Authentication Code
 
-The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic priciple would be to generate a hash using the actual payment details contained in the `purpose` field. This way, the wallet could be able to verify that the displayed purpose text correlates to the nonce value.
+The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic priciple would be to generate a hash using the actual payment details contained in the `purpose` field. This way, the wallet could be able to verify that the displayed purpose text correlates to the nonce value. The limitation of this approach is that the nonce value can only be linked to the purpose text of one credential. Therefor it must be defined that this behavior applies only to the first credential requested.
+
 
 ```bash
 > authorization_code="Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890 at 2024-03-21T09:46:14 - transaction id 123456"
