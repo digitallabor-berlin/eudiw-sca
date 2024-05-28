@@ -218,13 +218,13 @@ Example of a complete authorization request object:
   "client_id": "did:jwk:eyJrdHkiOiJFQ...",
   "client_id_scheme": "did",
   "iss": "did:jwk:eyJrdHkiOiJFQ...",
-  "nonce": "18be65c48f895fd22c26ae04aa31d9df658cdeb2533b793a497570bc9a59e577",
+  "nonce": "e346bf0f693f21c3d66785970104419671004e77b08195186dec96d3476eb25f",
   "presentation_definition": {
     "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
     "input_descriptors": [
             {
               "id": "subject",
-              "purpose": "Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890",
+              "purpose": "Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890 at 2024-03-21T09:46:14 - transaction id 123456",
               "path": [
                 "$.sub"
               ],
@@ -273,12 +273,12 @@ sequenceDiagram
 
 ## Dynamic Authentication Code
 
-The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic priciple would be to generate a hash using the actual payment details.
+The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic priciple would be to generate a hash using the actual payment details contained in the `purpose` field. This way, the wallet could be able to verify that the displayed purpose text correlates to the nonce value.
 
 ```bash
-> authorization_code="2024-03-21T09:46:14:123,49:EUR:Merchant A:DE88940594210020801890"
+> authorization_code="Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890 at 2024-03-21T09:46:14 - transaction id 123456"
 > echo $authorization_code | sha256sum
-a3d9920740983f6a1fa73d77dda0bb90deea873b2ecd91d8f0685270d9e96a3b
+e346bf0f693f21c3d66785970104419671004e77b08195186dec96d3476eb25f
 ```
 
 
