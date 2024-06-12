@@ -46,7 +46,6 @@ This document is focussing on the option to leverage the OpenID4VP[^openid4vp] a
 - **ASPSP**: Account Serving Payment Service Provider 
 - **Wallet**: An entity that receives, stores, presents, and manages credentials and key material of the End User. A wallet is defined as a nativ mobile application.
 - **Payment credential** : A verifiable credential issued by an ASPSP to a customer. The credential must be cryptographically bound to a private key residing in the wallet.
-- **Decentralized Identifier**: An identifier with its core ability being enabling Clients to obtain key material and other metadata by reference, defined in DID Core [^did].
 
 
 ## Flow
@@ -104,21 +103,6 @@ Example of an issued Payment credential.
 
 ### Payment
 
-#### Screenflow
-
-Same-device screenflow of the payment process:
-
-![Screenflow](screenflow.svg)
-
-1. Merchant app initiates the process by requesting the presentation of a payment credential.
-2. Redirect to wallet. Wallet asking the payer to consent to the presentation of a payment credential. If more than one suitable payment credential is available, they have to choose one. 
-    - Consent might include biometrics or PIN.
-3. Wallet displays the payment details and asks for content to the presentation.
-    - Consent must include biometrics or PIN.
-4. Purchase is completed.
-
-#### Present payment credential
-
 ```mermaid
 
 sequenceDiagram
@@ -126,6 +110,8 @@ sequenceDiagram
     actor payer as Payer
     participant uw as Wallet
     participant payee as Payee
+    participant pisp as PISP
+    participant bank as ASPSP Payer
 
     payee ->> uw: Present authorization request URL
     uw ->> payee: HTTP GET authorization request object
@@ -134,81 +120,32 @@ sequenceDiagram
     uw ->> payer: request consent 
     payer ->> uw: consents to presentation
     uw ->> payee: HTTP POST authorization response
-    Note over payee: initate payment... 
-    payee ->> uw: HTTP RESP 302 authorization response
+    payee ->> pisp: PISP API payment initiation request 
+    pisp ->> bank: OpenBanking API payment initiation request
+    bank ->> bank: verify and execute
+    bank -->> pisp: OpenBanking API payment initiation response
+    pisp -->> payee: PISP API payment initiation response
+    payee -->> uw: HTTP POST 200 authorization reponse
+    
+
 ```
 
-1. The payee requests the presentation of a Payment credential as defined by OpenID4VP[^openid4vp]. The authorization request URL is tranmitted
+1. The payee requests the presentation of a Payment credential as defined by OpenID4VP[^openid4vp] and the proposed extension for transaction data[^openid4vp_td] . The authorization request URL is tranmitted
     - **cross-device** by presenting it as a QR code / NFC Tag or
     - **same-device** by activating a link with a custom URL scheme.
 2. `HTTP GET` to load the OpenID4VP authorization request object
 3. `HTTP GET 200` response including the OpenID4VP authorization request object. The included `presentation_definition` requests the presentation of a valid payment credential from the wallet.
 4. Wallet request consents to present the payment credential from the payer.
 5. Payer consents to the presentation.
-6. `HTTP POST` OpenID4VP authorization response using `response_mode=direct_post`. The response includes a verifiable presentation of a payment credential. This will trigger the initation of a payment.
-    Note over payee: initate payment... 
-7. `HTTP POST` 302 Redirect to SCA
+6. `HTTP POST` OpenID4VP authorization response using `response_mode=direct_post`. The response includes a verifiable presentation of a payment credential. This will trigger the payment initiation.
+7. Once the payee verified the presented payment credential, it initiates a payment using a payment initiation service provider (PISP) by forwarding the signed presentation of the Payment credential.
+8. The PISP uses the information included in the payment credential to initiate a payment (aka the issuer of the payment credential) utilizing an OpenBanking API payment initiation request and forwarding the signed presentation of the Payment credential to the payers ASPSP.
+9. The ASPSP verifies the signed presentation of the Payment credential using the public key exchanged during onboarding. Upon a succesful verification, the ASPSP executes the payment.
+10. The ASPSP returns the status of the payment to the PISP
+11. The PISP returns the status of the payment to the payee 
+12. `HTTP POST` 200 OK indicating the payment was successful
 
-#### Payment initiation
-
-```mermaid
-
-sequenceDiagram
-    autonumber
-    participant uw as Wallet
-    participant payee as Payee
-    participant pisp as PISP
-    participant bank as ASPSP Payer
-
-    payee ->> pisp: request to initiate payment 
-    pisp ->> bank: payment initiation request
-    bank ->> pisp: payment initiation response
-    pisp ->> payee: Redirect Link for EUDIW SCA
-    payee -->> uw: HTTP 302 Redirect to Link for SCA
-    uw ->> bank: Follow redirect
-
-```
-
-1. Once the payee verified the presented payment credential, it initiates a payment using a payment initiation service provider (PISP). The presented Payment credential must be send along with the payment details.
-2. The PISP uses the information included in the payment credential to initiate a payment at the payers ASPSP (aka the issuer of the payment credential) utilizing an OpenBanking API payment initiation request.
-3. In response, the ASPSP of the payer sends the link to authorize the payment to the PISP.
-4. The PISP forwards the authorization link to the merchant.
-5. `HTTP 302` The payee redirects the wallet to the SCA authorization link as response to the presentation of the payment credential using `response_mode=direct_post`. As an alternative the merchant may display the link that has to be activated by the user.
-6. The wallet follows the authorization link to initiate the SCA.
-
-
-#### SCA payment authorization
-
-
-```mermaid
-
-sequenceDiagram
-    autonumber
-    participant payer as Payer
-    participant uw as Wallet
-    participant bank as ASPSP Payer
-    
-    uw ->> bank: HTTP GET Authorization request object
-    bank -->> uw: HTTP 200 Authorization request object
-    uw->>payer: Payment details
-    payer->> uw: consent
-    uw->>uw: sign
-    uw->>bank: HTTP POST Authorization response
-    bank ->> bank: Verify and execute payment
-    bank -->> uw: Authorization response OK
-
-```
-
-1. `HTTP GET` to load the OpenID4VP authorization request for the SCA 
-2. `HTTP 200` response including the OpenID4VP authorization request, which must contain
-    - `nonce` value calculated by hashing the transaction details as described [here](#dynamic-authentication-code) and
-    - the `presentation_definition` requesting the presentation of the payment credential. The `input_descriptor` MUST include the `purpose` property, which contains the details of the payment like amount and payee. 
-3. The wallet presents the `purpose` of the presentation request to the payer informing him about the amount, currency and the payee of the transaction.
-4. The user consents to the presentation of the payment credential by providing the **first factor like a wallet PIN or biometrics**.
-5. The wallet creates a payment credential presentation **signed with the private key created during the onboard as a second factor** and linked dynamically to the transaction by including the `nonce` value as described in OpenID4VP section 12.1 [^openid4vp].
-6. `HTTP POST` including the OpenID4VP authorization response and the verifiable presentation of the payment credential.
-7. The ASPSP verifies the verfiable presentation of the payment credential using the public key of the payer and executes the payment.
-8. `HTTP 200`  signals the wallet that the verifiable presentation has been received and verified successfully. Depending on the payment rail, it might also indicate the successful execution of a payment.
+The authorization request includes the transaction data within the presentation definition. The `transaction_data` array holds an object according to the payment data model scheme[^payment_data_model]. 
 
 Example of a complete authorization request object:
 
@@ -221,16 +158,37 @@ Example of a complete authorization request object:
   "nonce": "e346bf0f693f21c3d66785970104419671004e77b08195186dec96d3476eb25f",
   "presentation_definition": {
     "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
+    "transaction_data": [
+      {
+        "type": "payment_confirmation",
+        "input_descriptor_ids": [ "payment" ]
+        "instructedAmount": {
+          "amount": "123,49",
+          "currency": "EUR"
+        },
+        "paymentIdentification": {
+          "endToEndIdentification": "CDF834F4-5CF4-4A27-9C04-9EEB347BF"
+        },
+        "remittanceInformationUnstructured": [
+          "Shopping at Merchant A"
+        ],
+        "creditor": {
+          "name": "Merchant A"
+        },
+        "creditorAccount": {
+          "iban": "DE88940594210020801890"
+        }
+    ]
     "input_descriptors": [
             {
-              "id": "subject",
-              "purpose": "Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890 at 2024-03-21T09:46:14 - transaction id 123456",
+              "id": "payment",
+              "purpose": "Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890 at 2024-03-21T09:46:14 - transaction id CDF834F4-5CF4-4A27-9C04-9EEB347BF",
               "path": [
-                "$.sub"
+                "$.vc.type"
               ],
               "filter": {
                 "type": "string",
-                "const": "did:example:sd5sde"
+                "const": "PaymentKey"
               }
             }
           ]
@@ -246,45 +204,23 @@ Example of a complete authorization request object:
 
 ```
 
+#### Screenflow
 
-#### Payment Status
+Same-device screenflow of the payment process:
 
-```mermaid
+![Screenflow](screenflow.svg)
 
-sequenceDiagram
-    autonumber
-    participant payer as Payer
-    participant uw as Wallet
-    participant payee as Payee
-    participant pisp as PISP
-    participant bank as ASPSP Payer
-    
-    pisp ->> bank: Payment status request
-    bank ->> pisp: Payment status response
-    pisp ->> payee: Payment status
-    payee ->> payer: Payment status
-
-```
-
-1. The PISP polls the status of the payment using OpenBanking APIs. Alternativly this might also be done using a dedicated callback if offered by the ASPSP.
-2. The ASPSP communicates the status of the payment to the PISP.
-3. The PISP communicates the status of the payment to the payee.
-4. The PISP communicates the status of the payment to the payer.
-
-## Dynamic Authentication Code
-
-The requirements of the PSD2 regarding the dynamic linking of the SCA to a specific payment transaction can be fulfilled by utilizing the `nonce` property of the authorization request. There are multiple options on doing this, however the basic priciple would be to generate a hash using the actual payment details contained in the `purpose` field. This way, the wallet could be able to verify that the displayed purpose text correlates to the nonce value. 
-
-
-```bash
-> authorization_code="Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890 at 2024-03-21T09:46:14 - transaction id 123456"
-> echo $authorization_code | sha256sum
-e346bf0f693f21c3d66785970104419671004e77b08195186dec96d3476eb25f
-```
+1. Merchant app initiates the process by requesting the presentation of a payment credential and including the transaction details.
+2. Redirect to wallet. Wallet asking the payer to consent to the presentation of a payment credential and the transaction details. If more than one suitable payment credential is available, they have to choose one. 
+    - Consent might include biometrics or PIN.
+    - Consent must include biometrics or PIN.
+3. Purchase is completed.
 
 
 [^xs2a]: [NextGenPSD2 XS2A Framework Implementation Guidelines](https://www.berlin-group.org/_files/ugd/c2914b_fec1852ec9c640568f5c0b420acf67d2.pdf)
+[^payment_data_model]: [Payment Data Model for Version 2.0 of the
+openFinance API Framework](https://www.berlin-group.org/_files/ugd/c2914b_f8cab18ec71e476a9685c9a5f5260fda.pdf)
 [^openid4vp]: [OpenID4VP - draft 20](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
+[^openid4vp_td]: [OpenID4VP - Transaction Data Proposal](https://docs.google.com/document/d/1E_UlB3fh9zbWiPrzFThEnt69hYN60CWk/edit#heading=h.x3ay045bto1x)
 [^openid4vci]: [OpenID4VCI - draft 13](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
-[^did]:[Decentralized Identifiers - DIDs v1.0](https://www.w3.org/TR/did-core/)
 [^arf]:[Architecture Reference Framework 1.3](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/releases/download/v1.3.0/ARF-v1.3.0-for-publication.pdf)
