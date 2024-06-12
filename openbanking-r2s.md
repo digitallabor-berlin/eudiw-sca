@@ -161,7 +161,7 @@ Example of a complete authorization request object:
     "transaction_data": [
       {
         "type": "payment_confirmation",
-        "input_descriptor_ids": [ "payment" ]
+        "input_descriptor_ids": [ "payment" ],
         "instructedAmount": {
           "amount": "123,49",
           "currency": "EUR"
@@ -178,20 +178,18 @@ Example of a complete authorization request object:
         "creditorAccount": {
           "iban": "DE88940594210020801890"
         }
-    ]
+      }
+    ],
     "input_descriptors": [
-            {
-              "id": "payment",
-              "purpose": "Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890 at 2024-03-21T09:46:14 - transaction id CDF834F4-5CF4-4A27-9C04-9EEB347BF",
-              "path": [
-                "$.vc.type"
-              ],
-              "filter": {
-                "type": "string",
-                "const": "PaymentKey"
-              }
-            }
-          ]
+      {
+        "id": "payment",
+        "purpose": "Authorize the payment of 123,49 Euro to Merchant A, IBAN DE88940594210020801890 at 2024-03-21T09:46:14 - transaction id CDF834F4-5CF4-4A27-9C04-9EEB347BF",
+        "path": [
+          "$.vc.type"
+        ],
+        "filter": {
+          "type": "string",
+          "const": "PaymentKey"
         }
       }
     ]
