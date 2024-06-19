@@ -129,6 +129,7 @@ sequenceDiagram
     payee ->> uw: Present authorization request URL
     uw ->> payee: HTTP GET authorization request object
     payee ->> uw: HTTP RESP 200 authorization request object
+    uw ->> uw: Verify authorization request
 
     uw ->> payer: request consent 
     payer ->> uw: consents to presentation
@@ -148,15 +149,16 @@ sequenceDiagram
     - **same-device** by activating a link with a custom URL scheme.
 2. `HTTP GET` to load the OpenID4VP authorization request object
 3. `HTTP GET 200` response including the OpenID4VP authorization request object signed by the payee[^jar]. The included `presentation_definition` requests the presentation of a valid payment credential from the wallet.
-4. Wallet requests consent to present the payment credential including the transaction data (payment details) from the payer.
-5. Payer consents to the presentation.
-6. `HTTP POST` OpenID4VP authorization response using `response_mode=direct_post`. The response includes a verifiable presentation of a payment credential. This will trigger the payment initiation.
-7. Once the payee verified the presented payment credential, it initiates a payment using a payment initiation service provider (PISP) by forwarding the signed presentation of the Payment credential.
-8. The PISP uses the information included in the payment credential to initiate a payment utilizing an OpenBanking API payment initiation request and forwarding the signed presentation of the Payment credential to the payers ASPSP.
-9. The ASPSP verifies the signed presentation of the Payment credential using the public key exchanged during onboarding. Upon a succesful verification, the ASPSP executes the payment.
-10. The ASPSP returns the status of the payment to the PISP
-11. The PISP returns the status of the payment to the payee 
-12. `HTTP POST` 200 OK indicating the payment was successful
+4. Verify the signature of the authorisation request
+5. Wallet requests consent to present the payment credential including the transaction data (payment details) from the payer.
+6. Payer consents to the presentation.
+7. `HTTP POST` OpenID4VP authorization response using `response_mode=direct_post`. The response includes a verifiable presentation of a payment credential. This will trigger the payment initiation.
+8. Once the payee verified the presented payment credential, it initiates a payment using a payment initiation service provider (PISP) by forwarding the signed presentation of the Payment credential.
+9. The PISP uses the information included in the payment credential to initiate a payment utilizing an OpenBanking API payment initiation request and forwarding the signed presentation of the Payment credential to the payers ASPSP.
+10. The ASPSP verifies the signed presentation of the Payment credential using the public key exchanged during onboarding. Upon a succesful verification, the ASPSP executes the payment.
+11. The ASPSP returns the status of the payment to the PISP
+12. The PISP returns the status of the payment to the payee 
+13. `HTTP POST` 200 OK indicating the payment was successful
 
 The authorization request includes the transaction data within the presentation definition. The `transaction_data` array holds an object according to the payment data model scheme[^payment_data_model]. 
 
