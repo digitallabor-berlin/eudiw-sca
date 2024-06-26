@@ -52,6 +52,8 @@ This document is focussing on the option to leverage the OpenID4VP[^openid4vp] a
 
 Prior to using a wallet as a mean for SCA, it requires an onboarding to exchange a cryptographic key-set between the ASPSP and a customer wallet. The exchange is done by the ASPSP issuing a payment credential using OpenID4VCI [^openid4vci]. The private key will be created exclusivly for the presentation of the payment credential as also required by the European Commisions Architecture Reference Framework in section 6.3.2.4[^arf] stating that *"for each attestation, the EUDI Wallet Instance has access to an attestation private key, which is stored in the WSCD in (or connected to) the User’s device"*. The private key provides one of the authentication factors (possesion) for SCA. The access to the private always needs to be protected by the wallet using a second factor being either a PIN (knowledge) or biometrics (inherence). In order to ensure that the wallet is able to protect the private key according to given regulations, the ASPSP must rely on a proper client authentication as described in OpenID4VCI [^openid4vci] section 12.5.
 
+![Onboarding](wallet_onboarding.svg)
+
 ### Payment Credential
 
 The payment credential MUST be cryptographically bound to a dedicated private key created by the wallet and used to sign a `proof` while requesting the issuing of a Payment credential as described in OpenID4VCi, section 7.2[^openid4vci]. The `proof` parameter is therefor always REQUIRED.
@@ -116,6 +118,7 @@ JWT Payload
 
 Brief description of a payment initation flow using a payment initiation service (PIS) described in XS2A section 5[^xs2a].
 
+![Payment](wallet_payment.svg)
 ```mermaid
 
 sequenceDiagram
