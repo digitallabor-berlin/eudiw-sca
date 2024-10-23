@@ -1,8 +1,6 @@
-# SCA based on OpenID4VP using OpenBanking
+# Payment and Strong-customer-authentication for the eIDAS2 EUDI Wallet
 
 ## Abstract
-Open banking is a financial concept allowing third-party financial service providers to access customer banking data through APIs (Application Programming Interfaces). This innovation enables customers to securely authorize payment or share their financial information with other financial institutions or third-party providers. 
-
 Strong Customer Authentication (SCA) is a crucial requirement under the Revised Payment Service Directive (PSD2) aimed at enhancing the security of electronic payments. To meet SCA standards in open banking, banks must implement multi-factor authentication, typically involving two out of three factors: 
 
 - knowledge (e.g., password or PIN)
@@ -38,87 +36,51 @@ Article 5(1) of the Delegated Regulation (EU) 2018/389 states that: Where paymen
 
 In summary, dynamic linking is crucial for ensuring SCA provides true transaction integrity and non-repudiation under PSD2's remote electronic payment rules.
 
-This document is focussing on the option to leverage the OpenID4VP[^openid4vp] and OpenID4VCi[^openid4vci] specifications in order to introduce a standardized approach to allow compatible wallet applications to act as an authentication mean for SCA and payments . 
+## eIDAS 2.0 
+
+The European Digital Identity Regulation (Regulation (EU) 2024/1183) obliges European payment service providers (PSP) to accept the EU Digital Identity Wallet (EUDIW) 
+for SCA as [this paper](https://lange-hausstein.de/wp-content/uploads/2023/11/231120_DP-No.-1_EUDIW-for-SCA_EN_public.pdf) explains in more detail.
+
+The Architecture Reference Framework[^arf] for the EUDIW published by the European Commisions proposes the protocols OpenID4VCI[^openid4vci] and OpenID4VP[^openid4vp] 
+for the issuing and remote presentation of Electronic Attestations of Attributes (EAA). Therefor this document is focussing on the option to leverage these specifications
+in order to introduce a standardized approach to allow compatible wallet applications to act as an authentication mean for SCA and payments relying on the following two factors:
+- the wallets secure cryptographic device (WSCD) is used to securly generate and store a device-bound cryptographic key that is used to digitally sign a payment transaction (possesion) AND
+- the access to the key stored in the wallets WSCD is protected by a PIN only known to the holder (knowledge) OR biometrics (inherence).
+
+## Registration
+Before the wallet can serve as a mean for SCA, it has to be registered with the issuer of the payment mean - typically the account serving bank of the payer. 
+During the registration, the issuer is establishing a trusted context with the holder of the wallet. Exactly how this context is establish is left to the issuer and is out of the 
+scope of this documents. However possible options and combinations of them are:
+
+- Login credentials
+- OTP
+- 2FA Apps
+
+Within the trusted context, the issuer issues a dedicated EAA (hereinafter called A2Pay - Attestation to pay) to the wallet using OpenID4VCI [^openid4vci] 
+according to the OpenID4VC High Assurance Interoperability Profile using SD-JWT [^openid4vc_hip]. 
+The A2Pay must be connected to a dedicated cryptographic key as also required by the ARF in section 6.3.2.4[^arf] stating that *"for each attestation, the EUDI Wallet Instance has access to an attestation private key, which is stored in the WSCD in (or connected to) the User’s device"*. 
+
+![Registration](wallet_onboarding.svg)
+
+### Attestation to pay - A2Pay
+
+The A2Pay is issued by a bank or any other account serving enity. Its purpose is to indicate the payment method and the account used to make the payment.
+
+See the schema file [a2pay-schema.json](a2pay-schema.json) for details.
+
+## SCA
 
 
-## Terminology
 
-- **ASPSP**: Account Serving Payment Service Provider 
-- **Wallet**: An entity that receives, stores, presents, and manages credentials and key material of the End User. A wallet is defined as a nativ mobile application.
-- **Payment credential** : A verifiable credential issued by an ASPSP to a customer. The credential must be cryptographically bound to a private key residing in the wallet.
-
-
-## Onboarding
-
-Prior to using a wallet as a mean for SCA, it requires an onboarding to exchange a cryptographic key-set between the ASPSP and a customer wallet. The exchange is done by the ASPSP issuing a payment credential using OpenID4VCI [^openid4vci]. The private key will be created exclusivly for the presentation of the payment credential as also required by the European Commisions Architecture Reference Framework in section 6.3.2.4[^arf] stating that *"for each attestation, the EUDI Wallet Instance has access to an attestation private key, which is stored in the WSCD in (or connected to) the User’s device"*. The private key provides one of the authentication factors (possesion) for SCA. The access to the private always needs to be protected by the wallet using a second factor being either a PIN (knowledge) or biometrics (inherence). In order to ensure that the wallet is able to protect the private key according to given regulations, the ASPSP must rely on a proper client authentication as described in OpenID4VCI [^openid4vci] section 12.5.
-
-![Onboarding](wallet_onboarding.svg)
-
-### Payment Credential
-
-The payment credential MUST be cryptographically bound to a dedicated private key created by the wallet and used to sign a `proof` while requesting the issuing of a Payment credential as described in OpenID4VCi, section 7.2[^openid4vci]. The `proof` parameter is therefor always REQUIRED.
-
-The `credentialSubject` includes the following properties:
-
-- `id`: REQUIRED. Unique ID of the credential
-- `aspsp_name`: RECOMMENDED. Name of the issuing ASPSP.
-- `account_alias`: REQUIRED.
-- `bic`: REQUIRED. Business Identifier Code of the Bank.
-
-> [!NOTE]
-> Depending on the actual payment rail, the payment credential might include other / additional properties.
-
-
-Example of an issued Payment credential.
-
-JWT
-
-```
-eyJraWQiOiJkaWQ6andrOmV5SnJkSGtpT2lKUFMxQWlMQ0oxYzJVaU9pSnphV2NpTENKamNuWWlPaUpGWkRJMU5URTVJaXdpYTJsa0lqb2laRGRqTkRJNFlqTmlabU0zTkdOa09UbG1NRE01T1dFMFpUQTJZamhrTVdRaUxDSjRJam9pVEVSeWRYZ3liRmhFTkZSRVgxQk1Na1EyVUd4UlgzUk5kV3cxY2pOMVJsRjFRVFI2UldwblRqUjRRU0lzSW1Gc1p5STZJa1ZrUkZOQkluMCMwIiwidHlwIjoiSldUIiwiYWxnIjoiRWREU0EifQ.eyJpc3MiOiJkaWQ6andrOmV5SnJkSGtpT2lKUFMxQWlMQ0oxYzJVaU9pSnphV2NpTENKamNuWWlPaUpGWkRJMU5URTVJaXdpYTJsa0lqb2laRGRqTkRJNFlqTmlabU0zTkdOa09UbG1NRE01T1dFMFpUQTJZamhrTVdRaUxDSjRJam9pVEVSeWRYZ3liRmhFTkZSRVgxQk1Na1EyVUd4UlgzUk5kV3cxY2pOMVJsRjFRVFI2UldwblRqUjRRU0lzSW1Gc1p5STZJa1ZrUkZOQkluMCIsInN1YiI6ImRpZDpqd2s6ZXlKcmRIa2lPaUpQUzFBaUxDSjFjMlVpT2lKemFXY2lMQ0pqY25ZaU9pSkZaREkxTlRFNUlpd2lhMmxrSWpvaVkyUXpaREpsWkRVMU5qZGtOREl6Tm1Gak5HVTVORE5tWldVME5tUXpORGdpTENKNElqb2lNVGcxUm1SYWFERkhkVGhrVWxKZmNuZGhNV1J5Tm14YWRETXRTRFJDWkRSdVV6WmFTMU56UlZVeGF5SXNJbUZzWnlJNklrVmtSRk5CSW4wIiwibmJmIjoxNzE4MTk4NDMzLCJpYXQiOjE3MTgxOTg0MzMsInZjIjp7InR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQYXltZW50S2V5Il0sIkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIiwiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvZXhhbXBsZXMvdjEiXSwiaWQiOiJ1cm46dXVpZDpmZmQ2YWQxYi0xYTEyLTQwYzQtYjRhMi0zNTQwMzM4YjViZGYiLCJpc3N1ZXIiOnsiaWQiOiJkaWQ6andrOmV5SnJkSGtpT2lKUFMxQWlMQ0oxYzJVaU9pSnphV2NpTENKamNuWWlPaUpGWkRJMU5URTVJaXdpYTJsa0lqb2laRGRqTkRJNFlqTmlabU0zTkdOa09UbG1NRE01T1dFMFpUQTJZamhrTVdRaUxDSjRJam9pVEVSeWRYZ3liRmhFTkZSRVgxQk1Na1EyVUd4UlgzUk5kV3cxY2pOMVJsRjFRVFI2UldwblRqUjRRU0lzSW1Gc1p5STZJa1ZrUkZOQkluMCJ9LCJpc3N1YW5jZURhdGUiOiIyMDI0LTA2LTEyVDEzOjIwOjMzWiIsImlzc3VlZCI6IjIwMjQtMDYtMTJUMTM6MjA6MzNaIiwidmFsaWRGcm9tIjoiMjAyNC0wNi0xMlQxMzoyMDozM1oiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRpZDpqd2s6ZXlKcmRIa2lPaUpQUzFBaUxDSjFjMlVpT2lKemFXY2lMQ0pqY25ZaU9pSkZaREkxTlRFNUlpd2lhMmxrSWpvaVkyUXpaREpsWkRVMU5qZGtOREl6Tm1Gak5HVTVORE5tWldVME5tUXpORGdpTENKNElqb2lNVGcxUm1SYWFERkhkVGhrVWxKZmNuZGhNV1J5Tm14YWRETXRTRFJDWkRSdVV6WmFTMU56UlZVeGF5SXNJbUZzWnlJNklrVmtSRk5CSW4wIiwiYXNwc3BfbmFtZSI6IlNwYXJrYXNzZSIsImFjY291bnRfYWxpYXMiOiJNeUFjY291bnQiLCJiaWMiOiJDT0xTREUzM1hYWCJ9fSwianRpIjoidXJuOnV1aWQ6ZmZkNmFkMWItMWExMi00MGM0LWI0YTItMzU0MDMzOGI1YmRmIn0.o3yD6m9CeKlgg9DzNI0AYcBsczRZ8Pp1PkdXad3-eQwxIXOrXuOnhr6YUHE46iSKpHP68Vd-CX7xIBBQWx1lBw
-```
-
-JWT Payload
-
-```json
-
-{
-  "iss": "did:jwk:eyJrdHkiOiJPS1AiLCJ1c2UiOiJzaWciLCJjcnYiOiJFZDI1NTE5Iiwia2lkIjoiZDdjNDI4YjNiZmM3NGNkOTlmMDM5OWE0ZTA2YjhkMWQiLCJ4IjoiTERydXgybFhENFREX1BMMkQ2UGxRX3RNdWw1cjN1RlF1QTR6RWpnTjR4QSIsImFsZyI6IkVkRFNBIn0",
-  "sub": "did:jwk:eyJrdHkiOiJPS1AiLCJ1c2UiOiJzaWciLCJjcnYiOiJFZDI1NTE5Iiwia2lkIjoiY2QzZDJlZDU1NjdkNDIzNmFjNGU5NDNmZWU0NmQzNDgiLCJ4IjoiMTg1RmRaaDFHdThkUlJfcndhMWRyNmxadDMtSDRCZDRuUzZaS1NzRVUxayIsImFsZyI6IkVkRFNBIn0",
-  "nbf": 1718198433,
-  "iat": 1718198433,
-  "vc": {
-    "type": [
-      "VerifiableCredential",
-      "PaymentKey"
-    ],
-    "@context": [
-      "https://www.w3.org/2018/credentials/v1",
-      "https://www.w3.org/2018/credentials/examples/v1"
-    ],
-    "id": "urn:uuid:ffd6ad1b-1a12-40c4-b4a2-3540338b5bdf",
-    "issuer": {
-      "id": "did:jwk:eyJrdHkiOiJPS1AiLCJ1c2UiOiJzaWciLCJjcnYiOiJFZDI1NTE5Iiwia2lkIjoiZDdjNDI4YjNiZmM3NGNkOTlmMDM5OWE0ZTA2YjhkMWQiLCJ4IjoiTERydXgybFhENFREX1BMMkQ2UGxRX3RNdWw1cjN1RlF1QTR6RWpnTjR4QSIsImFsZyI6IkVkRFNBIn0"
-    },
-    "issuanceDate": "2024-06-12T13:20:33Z",
-    "issued": "2024-06-12T13:20:33Z",
-    "validFrom": "2024-06-12T13:20:33Z",
-    "credentialSubject": {
-      "id": "did:jwk:eyJrdHkiOiJPS1AiLCJ1c2UiOiJzaWciLCJjcnYiOiJFZDI1NTE5Iiwia2lkIjoiY2QzZDJlZDU1NjdkNDIzNmFjNGU5NDNmZWU0NmQzNDgiLCJ4IjoiMTg1RmRaaDFHdThkUlJfcndhMWRyNmxadDMtSDRCZDRuUzZaS1NzRVUxayIsImFsZyI6IkVkRFNBIn0",
-      "aspsp_name": "Sparkasse",
-      "account_alias": "MyAccount",
-      "bic": "COLSDE33XXX"
-    }
-  },
-  "jti": "urn:uuid:ffd6ad1b-1a12-40c4-b4a2-3540338b5bdf"
-}
-
-```
 
 ## Payment
 
-Brief description of a payment initation flow using a payment initiation service (PIS) described in XS2A section 5[^xs2a].
+
 
 ![Payment](wallet_payment.svg)
+
+1. Issuer (bank)
+
 ```mermaid
 
 sequenceDiagram
@@ -126,7 +88,7 @@ sequenceDiagram
     actor payer as Payer
     participant uw as Wallet
     participant payee as Payee
-    participant pisp as PISP
+    participant psp as PSP
     participant bank as ASPSP Payer
 
     payee ->> uw: Present authorization request URL
@@ -137,17 +99,17 @@ sequenceDiagram
     uw ->> payer: request consent 
     payer ->> uw: consents to presentation
     uw ->> payee: HTTP POST authorization response
-    payee ->> pisp: PISP API payment initiation request 
-    pisp ->> bank: OpenBanking API payment initiation request
+    payee ->> psp: PSP API payment initiation request 
+    psp ->> bank: OpenBanking API payment initiation request
     bank ->> bank: verify and execute
-    bank -->> pisp: OpenBanking API payment initiation response
-    pisp -->> payee: PISP API payment initiation response
+    bank -->> psp: OpenBanking API payment initiation response
+    psp -->> payee: PSP API payment initiation response
     payee -->> uw: HTTP POST 200 authorization reponse
     
 
 ```
 
-1. The payee requests the presentation of a Payment credential as defined by OpenID4VP[^openid4vp] and the proposed extension for transaction data[^openid4vp_td] . The authorization request URL is tranmitted
+1. The payee requests the presentation of an A2Pay as defined by OpenID4VP[^openid4vp] and the proposed extension for transaction data[^openid4vp_td] . The authorization request URL is tranmitted
     - **cross-device** by presenting it as a QR code / NFC Tag or
     - **same-device** by activating a link with a custom URL scheme.
 2. `HTTP GET` to load the OpenID4VP authorization request object
@@ -251,3 +213,4 @@ openFinance API Framework](https://www.berlin-group.org/_files/ugd/c2914b_f8cab1
 [^arf]:[Architecture Reference Framework 1.3](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/releases/download/v1.3.0/ARF-v1.3.0-for-publication.pdf)
 [^jar]:[ JWT-Secured Authorization Request](https://www.rfc-editor.org/rfc/rfc9101.html#name-jws-signed-request-object)
 [^bg_sec]: [openFinance API Framework Implementation Guidelines, Protocol Functions and Security Measures](https://c2914bdb-1b7a-4d22-b792-c58ac5d6648e.usrfiles.com/archives/c2914b_db4be6e61a4e4581897d5758d2a4c8de.zip)
+[^openid4vc_hip]: [OpenID4VC High Assurance Interoperability Profile with SD-JWT VC ](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-sd-jwt-vc-1_0.html)
