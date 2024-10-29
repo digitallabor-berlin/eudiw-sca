@@ -1,6 +1,6 @@
-# Payment and Strong-customer-authentication for the eIDAS2 EUDI Wallet
+# Strong-customer-authentication for electronic payments for the eIDAS2 EUDI Wallet
 
-## Abstract
+## Background
 Strong Customer Authentication (SCA) is a crucial requirement under the Revised Payment Service Directive (PSD2) aimed at enhancing the security of electronic payments. To meet SCA standards in open banking, banks must implement multi-factor authentication, typically involving two out of three factors: 
 
 - knowledge (e.g., password or PIN)
@@ -12,7 +12,6 @@ This additional layer of security is essential to combat fraud in online transac
 - **Redirected**: The Redirected SCA approach described in XS2A section 5.1.1[^xs2a] involves redirecting users to their bank's authentication interface during a payment transaction to complete the authorization process. This method presents a pre-populated credit transfer screen for the user's confirmation, making it a semi-automated process where the flow is controlled by the user, initiating the payment themselves Embedded
 - **Embedded**: The Embedded SCA approach described in XS2A section 5.1.8[^xs2a] involves a fully automated process where the payment is initiated on behalf of the Payment Service User (PSU) by the Third-Party Provider (TPP). In this method, the user shares their credentials with the TPP, who then authenticates and initiates the payment in the background, embedding the authentication process seamlessly within the transaction flow.
 - **Decoupled**: The Decoupled approach described in XS2A section 5.1.7[^xs2a] offers a convenient method to obtain SCA approval with minimal effort from the merchant or cardholder. This approach allows transactions to occur without the cardholder being actively engaged with the merchant's website or mobile application. Instead, authentication is conducted through alternative channels, such as mobile push notifications within banking apps, email, or other methods chosen by the Issuer bank to inform the cardholder of an authentication request from a merchant.
-
 
 Dynamic linking is another key requirement under the Strong Customer Authentication (SCA) rules of the PSD2 for remote electronic payment transactions. It aims to ensure the integrity of the transaction by cryptographically linking the payment details to the customer's authentication. Here's how it works:
 
@@ -36,46 +35,90 @@ Article 5(1) of the Delegated Regulation (EU) 2018/389 states that: Where paymen
 
 In summary, dynamic linking is crucial for ensuring SCA provides true transaction integrity and non-repudiation under PSD2's remote electronic payment rules.
 
-## eIDAS 2.0 
+### eIDAS 2.0
 
-The European Digital Identity Regulation (Regulation (EU) 2024/1183) obliges European payment service providers (PSP) to accept the EU Digital Identity Wallet (EUDIW) 
-for SCA as [this paper](https://lange-hausstein.de/wp-content/uploads/2023/11/231120_DP-No.-1_EUDIW-for-SCA_EN_public.pdf) explains in more detail.
+The European Digital Identity Regulation (Regulation (EU) 2024/1183) obliges European payment service providers (PSP) to accept the EU Digital Identity Wallet (EUDIW) for SCA as [this paper](https://lange-hausstein.de/wp-content/uploads/2023/11/231120_DP-No.-1_EUDIW-for-SCA_EN_public.pdf) discusses in more detail.
 
-The Architecture Reference Framework[^arf] for the EUDIW published by the European Commisions proposes the protocols OpenID4VCI[^openid4vci] and OpenID4VP[^openid4vp] 
-for the issuing and remote presentation of Electronic Attestations of Attributes (EAA). Therefor this document is focussing on the option to leverage these specifications
-in order to introduce a standardized approach to allow compatible wallet applications to act as an authentication mean for SCA and payments relying on the following two factors:
+### Architecture Reference Framework
+
+Along with the regulation, the European Commision provides a set of technical specification and recommondations regarding the development of the European Digital Identity Wallet infrastructure through the Architecture Reference Framework (ARF)[^arf]. The ARF specifically proposes the following protocols for the remote issuing and presentation of Electronic Attestations of Attributes (EAA, see ARF Annex 1[^arf_annex1]). 
+
+- **OpenID4VCI[^openid4vci]**
+- **OpenID4VP[^openid4vp]** 
+
+In order to be able to combine payment with other EAAs in a synergistical manner as described in ARF Annex2 section A.2.3.18 Topic 18[^arf_annex2], this document in focusing on leveraging these specification to perform SCA and authorize electronic payment transactions as described further in ARF, section A.2.3.20 Topic 20[^arf_annex2].
+
+#### Security presumtions
 - the wallets secure cryptographic device (WSCD) is used to securly generate and store a device-bound cryptographic key that is used to digitally sign a payment transaction (possesion) AND
 - the access to the key stored in the wallets WSCD is protected by a PIN only known to the holder (knowledge) OR biometrics (inherence).
 
 ## Registration
-Before the wallet can serve as a mean for SCA, it has to be registered with the issuer of the payment mean - typically the account serving bank of the payer. 
-During the registration, the issuer is establishing a trusted context with the holder of the wallet. Exactly how this context is establish is left to the issuer and is out of the 
-scope of this documents. However possible options and combinations of them are:
+The (one-time) registration process links the holders wallet instance and their PSP managing the account used for payments. It also allows the PSP to establish a trust relationship to the wallet by verifying its authenticity as described in more detail in ARF, section 6.6.2[^arf].
 
-- Login credentials
+During registration, the PSP aka issuer issues a dedicated EAA (hereinafter called A2Pay - Attestation to pay) to the wallet using OpenID4VCI [^openid4vci] according to the OpenID4VC High Assurance Interoperability Profile using SD-JWT VC [^openid4vc_hip]. OpenID4VCI allows the issuer to issue an EAA within an authenticated / authorized context. Exactly how this context is establish is left to the issuer and is out of the scope of this document, however possible options and combinations of them are:
+
+- Login credentials (OnlineBanking e.g.)
 - OTP
-- 2FA Apps
+- 2FA Apps (Propriatary Banking Apps e.g.)
 
-Within the trusted context, the issuer issues a dedicated EAA (hereinafter called A2Pay - Attestation to pay) to the wallet using OpenID4VCI [^openid4vci] 
-according to the OpenID4VC High Assurance Interoperability Profile using SD-JWT [^openid4vc_hip]. 
-The A2Pay must be connected to a dedicated cryptographic key as also required by the ARF in section 6.3.2.4[^arf] stating that *"for each attestation, the EUDI Wallet Instance has access to an attestation private key, which is stored in the WSCD in (or connected to) the User’s device"*. 
+As stated in ARF section 6.6.6.3, 6.6.3.7[^arf] and also ARF Annex 2 section A.2.3.9 Topic 9[^arf_annex2], the issued A2Pay is cryptographically linked to a private key protected by the Wallet Secure Cryptographic Application(s) (WSCA) and the corresponding Wallet Secure Cryptographic Device(s) (WSCD). During the issuing process, the corresponding public key is handed to the PSP which must store it along with the holders account data, as it must be used to verify payment transactions authorized / signed by the holder.
+
+The private key constitutes the major factor to implement SCA within the wallet. Regarding its security, the following assumptions are made.
+- the key to sign payment transactions is bound to the WSCD of the wallet and cannnot be extraxted. Therefor the key provides the factor possesion for SCA. AND
+- the access to the key is always protected by a PIN only known to the holder OR biometrics providing the factors knowledge OR inherence. 
 
 ![Registration](wallet_onboarding.svg)
 
 ### Attestation to pay - A2Pay
 
-The A2Pay is issued by a bank or any other account serving enity. Its purpose is to indicate the payment method and the account used to make the payment.
+The A2Pay is used to identify the holders PSP and the account the attestation is connected with. In addition to that, the attestation may also state a payment rail along with required metadata that a relying party (merchant e.g.) might use to initiate a payment transaction.  
 
-See the schema file [a2pay-schema.json](a2pay-schema.json) for details.
+The data schema for A2Pay is described in detail within the json schema file [a2pay-schema.json](a2pay-schema.json).
 
-## SCA
+Non-normative example of an A2Pay as `sd-jwt`:
+
+```
+{
+    "_sd": [],
+    "iss": "https://bank.com/issuer",
+    "exp": 1883000000,
+    "nbf": 1718198433,
+    "iat": 1718198433,
+    "vct": "https://credentials.example.com/a2pay",
+    "_sd_alg": "sha-256",
+    "id": "8D8AC610-566D-4EF0-9C22-186B2A5ED793",
+    "payment-product": "sct-inst-eu",
+    "initiation-url": "https://bank.com/pay/7dfe5484g78/init",
+    "iban": "DE75512108001245126199",
+    "currency": "EUR",
+    "name": "Account John Smith",
+    "display-name": "My Account",
+    "cnf": {
+      "jwk": {
+        "crv": "P-256",
+        "kty": "EC",
+        "x": "NASJ2ADuagOvraLf7O4VxcBMbantzL9dd0jpvMLnBfs",
+        "y": "OJY6pqCqRIzpEt78OXasWHGgqV5ZGre_3cHtpNH82gg"
+        }
+    }
+}
+
+
+eyJhbGciOiJFUzI1NiJ9.ewogICAgIl9zZCI6IFtdLAogICAgImlzcyI6ICJodHRwczovL2JhbmsuY29tL2lzc3VlciIsCiAgICAiZXhwIjogMTg4MzAwMDAwMCwKICAgICJuYmYiOiAxNzE4MTk4NDMzLAogICAgImlhdCI6IDE3MTgxOTg0MzMsCiAgICAidmN0IjogImh0dHBzOi8vY3JlZGVudGlhbHMuZXhhbXBsZS5jb20vYTJwYXkiLAogICAgIl9zZF9hbGciOiAic2hhLTI1NiIsCiAgICAiaWQiOiAiOEQ4QUM2MTAtNTY2RC00RUYwLTlDMjItMTg2QjJBNUVENzkzIiwKICAgICJwYXltZW50LXByb2R1Y3QiOiAic2N0LWluc3QtZXUiLAogICAgImluaXRpYXRpb24tdXJsIjogImh0dHBzOi8vYmFuay5jb20vcGF5LzdkZmU1NDg0Zzc4L2luaXQiLAogICAgImFjY291bnQtcmVmZXJlbmNlIjogewogICAgICAgICJpYmFuIjogIkRFNzU1MTIxMDgwMDEyNDUxMjYxOTkiLAogICAgICAgICJjdXJyZW5jeSI6ICJFVVIiLAogICAgICAgICJuYW1lIjogIkFjY291bnQgSm9obiBTbWl0aCIsCiAgICAgICAgImRpc3BsYXktbmFtZSI6ICJNeSBBY2NvdW50IgogICAgfSwKICAgICJjbmYiOiB7CiAgICAgICJqd2siOiB7CiAgICAgICAgImNydiI6ICJQLTI1NiIsCiAgICAgICAgImt0eSI6ICJFQyIsCiAgICAgICAgIngiOiAiTkFTSjJBRHVhZ092cmFMZjdPNFZ4Y0JNYmFudHpMOWRkMGpwdk1MbkJmcyIsCiAgICAgICAgInkiOiAiT0pZNnBxQ3FSSXpwRXQ3OE9YYXNXSEdncVY1WkdyZV8zY0h0cE5IODJnZyIKICAgICAgICB9CiAgICB9Cn0.LdJLI0vaLFwGdXmrmqD6GsVW6YPS04yZnEfvBCLK_5ihiYZFbPBNNGEtrmTcdlDtPh2kNHy2x6ldCj7dQcAnPw
+```
+
+## Presentation
+
+The presentation of the A2Pay 
+
+
+### Dynamic linking
+
 
 
 
 
 ## Payment
-
-
 
 ![Payment](wallet_payment.svg)
 
@@ -210,7 +253,9 @@ openFinance API Framework](https://www.berlin-group.org/_files/ugd/c2914b_f8cab1
 [^openid4vp]: [OpenID4VP - draft 20](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 [^openid4vp_td]: [OpenID4VP - Transaction Data Proposal](https://github.com/openid/OpenID4VP/blob/transaction_data/openid-4-verifiable-presentations-1_0.md)
 [^openid4vci]: [OpenID4VCI](https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html)
-[^arf]:[Architecture Reference Framework 1.3](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/releases/download/v1.3.0/ARF-v1.3.0-for-publication.pdf)
+[^arf]:[Architecture Reference Framework](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/blob/main/docs/arf.md)
+[^arf_annex1]: [ARF Annex 1](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/blob/main/docs/annexes/annex-1/annex-1-definitions.md)
+[^arf_annex2]: [ARF Annex 2](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/blob/main/docs/annexes/annex-2/annex-2-high-level-requirements.md)
 [^jar]:[ JWT-Secured Authorization Request](https://www.rfc-editor.org/rfc/rfc9101.html#name-jws-signed-request-object)
 [^bg_sec]: [openFinance API Framework Implementation Guidelines, Protocol Functions and Security Measures](https://c2914bdb-1b7a-4d22-b792-c58ac5d6648e.usrfiles.com/archives/c2914b_db4be6e61a4e4581897d5758d2a4c8de.zip)
 [^openid4vc_hip]: [OpenID4VC High Assurance Interoperability Profile with SD-JWT VC ](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-sd-jwt-vc-1_0.html)
